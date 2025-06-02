@@ -1,11 +1,21 @@
 // src/types/tickets.ts
-import type { UsuarioSimpleDto } from './auth'; // Asumiendo que está en src/types/auth.ts
-import type { ClienteSimpleDto } from './clientes'; // Asumiendo que está en src/types/clientes.ts
-import type { CentroDeCostoSimpleDto } from './centrosDeCosto'; // Asumiendo que está en src/types/centrosDeCosto.ts
 
-// Estos tipos deben coincidir con las enumeraciones del backend
-// Si el backend devuelve los enums como strings, usa string aquí.
-// Si los devuelve como números (valor del enum), usa number.
+// Asegúrate de que src/types/auth.ts exista y exporte UsuarioSimpleDto
+import type { UsuarioSimpleDto } from './auth'; 
+
+// Definición local de DTOs simples para evitar errores de módulo no encontrado.
+export interface ClienteSimpleDto {
+  clienteID: string;
+  nombre: string;
+  apellido?: string | null;
+}
+
+export interface CentroDeCostoSimpleDto {
+  centroDeCostoID: string;
+  nombre: string;
+}
+
+// Enums (sin cambios, deberían estar bien)
 export type PrioridadTicketEnum = 0 | 1 | 2 | 3;
 export const PrioridadTicketEnum = {
   BAJA: 0 as 0,
@@ -29,10 +39,10 @@ export const EstadoTicketEnum = {
 export interface NotaSimpleDto {
   notaID: string;
   contenido: string;
-  fechaCreacion: string; // o Date
-  usuarioCreador?: UsuarioSimpleDto;
+  fechaCreacion: string; 
+  usuarioCreador?: UsuarioSimpleDto | null;
   tiempoDeTrabajo?: number | null;
-  tipoNota: string; // "Soporte" o "Desarrollo"
+  tipoNota: string; 
 }
 
 export interface AdjuntoSimpleDto {
@@ -40,9 +50,9 @@ export interface AdjuntoSimpleDto {
   nombreArchivo: string;
   tipoArchivo: string;
   tamanoArchivoKB: number;
-  fechaCarga: string; // o Date
+  fechaCarga: string; 
   urlUbicacion: string;
-  usuarioCargador?: UsuarioSimpleDto;
+  usuarioCargador?: UsuarioSimpleDto | null;
 }
 
 export interface TicketDto {
@@ -50,11 +60,11 @@ export interface TicketDto {
   numeroTicketFormateado: string;
   titulo: string;
   descripcion?: string | null;
-  fechaCreacion: string; // o Date
-  fechaUltimaModificacion: string; // o Date
-  prioridad: PrioridadTicketEnum; // Usar el enum
-  estado: EstadoTicketEnum;       // Usar el enum
-  tipoTicket: string; // "Soporte" o "Desarrollo"
+  fechaCreacion: string; 
+  fechaUltimaModificacion: string; 
+  prioridad: PrioridadTicketEnum; 
+  estado: EstadoTicketEnum;       
+  tipoTicket: string; 
 
   cliente?: ClienteSimpleDto | null;
   centroDeCosto?: CentroDeCostoSimpleDto | null;
@@ -62,9 +72,8 @@ export interface TicketDto {
   usuarioResponsable?: UsuarioSimpleDto | null;
   participantes: UsuarioSimpleDto[];
 
-  // Campos específicos para TicketDesarrollo
-  fechaInicioPlanificada?: string | null; // o Date
-  fechaFinPlanificada?: string | null;    // o Date
+  fechaInicioPlanificada?: string | null; 
+  fechaFinPlanificada?: string | null;    
   horasEstimadas?: number | null;
   horasAcumuladas: number;
 
@@ -72,7 +81,39 @@ export interface TicketDto {
   adjuntos: AdjuntoSimpleDto[];
 }
 
-// También necesitarás tipos para DTOs de creación/actualización si los defines aquí
-// export interface CrearTicketSoporteDto { ... }
-// export interface CrearTicketDesarrolloDto { ... }
-// export interface ActualizarTicketDto { ... }
+// --- DTOs para Creación de Tickets ---
+// Estos deben coincidir con los DTOs del backend
+
+export interface CrearTicketBaseDto {
+  titulo: string;
+  descripcion?: string | null;
+  prioridad: PrioridadTicketEnum;
+  clienteID: string;
+  centroDeCostoID?: string | null;
+  usuarioResponsableID?: string | null;
+  participantesIds?: string[] | null;
+}
+
+export interface CrearTicketSoporteDto extends CrearTicketBaseDto {
+  // No tiene propiedades adicionales específicas para la creación
+}
+
+export interface CrearTicketDesarrolloDto extends CrearTicketBaseDto {
+  fechaInicioPlanificada?: string | null; // En el backend son DateTime?, aquí string para el input date
+  fechaFinPlanificada?: string | null;   // En el backend son DateTime?, aquí string para el input date
+  horasEstimadas?: number | null;
+}
+
+// --- DTO para Actualización de Tickets ---
+// (Lo definimos aquí también para tener todos los tipos de ticket juntos)
+export interface ActualizarTicketDto {
+    titulo?: string | null;
+    descripcion?: string | null;
+    prioridad?: PrioridadTicketEnum | null;
+    estado?: EstadoTicketEnum | null; 
+    centroDeCostoID?: string | null; 
+    usuarioResponsableID?: string | null; 
+    fechaInicioPlanificada?: string | null; 
+    fechaFinPlanificada?: string | null;    
+    horasEstimadas?: number | null;
+}

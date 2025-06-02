@@ -1,27 +1,15 @@
 // src/pages/TicketsListPage.tsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import apiClient from '../services/apiClient'; // Ajusta la ruta si es necesario
-import type { TicketDto } from '../types/tickets'; // Crearemos este tipo luego
+import apiClient from '../services/apiClient';
+// CORRECCIÓN: Importar enums como valores, no solo como tipos
+import { type TicketDto, PrioridadTicketEnum, EstadoTicketEnum } from '../types/tickets'; 
 import Table from 'react-bootstrap/Table';
 import Button from 'react-bootstrap/Button';
 import Alert from 'react-bootstrap/Alert';
-import Spinner from 'react-bootstrap/Spinner'; // Para el indicador de carga
-import { BsEye as Eye, BsPencilSquare as PencilSquare, BsTrash3 as Trash3 } from 'react-icons/bs'; // Iconos
-
-// Definir el tipo para TicketDto (simplificado, ajusta según tu backend)
-// Idealmente, esto estaría en src/types/tickets.ts
-// export interface TicketDto {
-//   ticketID: string;
-//   numeroTicketFormateado: string;
-//   titulo: string;
-//   cliente?: { nombre: string; apellido?: string };
-//   prioridad: number; // O string si tu enum se mapea a string
-//   estado: number;    // O string
-//   fechaCreacion: string; // O Date
-//   usuarioResponsable?: { nombreCompleto: string };
-//   tipoTicket: string;
-// }
+import Spinner from 'react-bootstrap/Spinner';
+import Badge from 'react-bootstrap/Badge'; 
+import { Eye, PencilSquare, Trash3, PlusCircle } from 'react-bootstrap-icons';
 
 const TicketsListPage: React.FC = () => {
   const [tickets, setTickets] = useState<TicketDto[]>([]);
@@ -51,69 +39,83 @@ const TicketsListPage: React.FC = () => {
     fetchTickets();
   }, []);
 
-  const getPrioridadText = (prioridadValue: number): string => {
-    // Asume que tu enum PrioridadTicket en el backend se mapea a estos valores:
-    // BAJA = 0, MEDIA = 1, ALTA = 2, URGENTE = 3
-    switch (prioridadValue) {
-      case 0: return 'Baja';
-      case 1: return 'Media';
-      case 2: return 'Alta';
-      case 3: return 'Urgente';
-      default: return 'Desconocida';
-    }
-  };
+  const prioridadMap: Record<PrioridadTicketEnum, { text: string; variant: string }> = useMemo(() => ({
+    [PrioridadTicketEnum.BAJA]: { text: 'Baja', variant: 'secondary' },
+    [PrioridadTicketEnum.MEDIA]: { text: 'Media', variant: 'info' },
+    [PrioridadTicketEnum.ALTA]: { text: 'Alta', variant: 'warning' },
+    [PrioridadTicketEnum.URGENTE]: { text: 'Urgente', variant: 'danger' },
+  }), []);
 
-  const getEstadoText = (estadoValue: number): string => {
-    // Asume que tu enum EstadoTicket en el backend se mapea a estos valores:
-    // NUEVO = 0, ABIERTO = 1, ASIGNADO = 2, EN_PROGRESO = 3, PENDIENTE_CLIENTE = 4, 
-    // EN_REVISION = 5, RESUELTO = 6, CERRADO = 7
-    const estados = [
-      'Nuevo', 'Abierto', 'Asignado', 'En Progreso', 
-      'Pendiente Cliente', 'En Revisión', 'Resuelto', 'Cerrado'
-    ];
-    return estados[estadoValue] || 'Desconocido';
-  };
+  const estadoMap: Record<EstadoTicketEnum, { text: string; variant: string }> = useMemo(() => ({
+    [EstadoTicketEnum.NUEVO]: { text: 'Nuevo', variant: 'primary' },
+    [EstadoTicketEnum.ABIERTO]: { text: 'Abierto', variant: 'success' },
+    [EstadoTicketEnum.ASIGNADO]: { text: 'Asignado', variant: 'info' },
+    [EstadoTicketEnum.EN_PROGRESO]: { text: 'En Progreso', variant: 'warning' },
+    [EstadoTicketEnum.PENDIENTE_CLIENTE]: { text: 'Pendiente Cliente', variant: 'light' },
+    [EstadoTicketEnum.EN_REVISION]: { text: 'En Revisión', variant: 'secondary' },
+    [EstadoTicketEnum.RESUELTO]: { text: 'Resuelto', variant: 'dark' }, 
+    [EstadoTicketEnum.CERRADO]: { text: 'Cerrado', variant: 'secondary' },
+  }), []);
   
-  const formatDate = (dateString: string) => {
-    if (!dateString) return '';
+  const formatDate = (dateString: string): string => {
+    if (!dateString) return 'N/A';
     try {
         return new Date(dateString).toLocaleDateString('es-AR', {
-            year: 'numeric', month: '2-digit', day: '2-digit'
+            year: 'numeric', month: '2-digit', day: '2-digit',
         });
     } catch (e) {
-        return dateString; // Devuelve el string original si hay error
+        return dateString; 
     }
   };
 
+  const handleViewDetails = (ticketId: string) => {
+    navigate(`/tickets/${ticketId}`); 
+  };
+
+  const handleEditTicket = (ticketId: string) => {
+    navigate(`/tickets/editar/${ticketId}`); 
+  };
+
+  const handleDeleteTicket = async (ticketId: string) => {
+    if (window.confirm(`¿Estás seguro de que deseas eliminar el ticket ${ticketId}?`)) {
+      try {
+        await apiClient.delete(`/api/tickets/${ticketId}`);
+        setTickets(tickets.filter(ticket => ticket.ticketID !== ticketId));
+      } catch (err: any) {
+        setError(err.response?.data?.message || 'Error al eliminar el ticket.');
+        console.error('Error deleting ticket:', err);
+      }
+    }
+  };
 
   if (loading) {
     return (
-      <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '300px' }}>
-        <Spinner animation="border" variant="primary" />
-        <span className="ms-3">Cargando tickets...</span>
+      <div className="d-flex justify-content-center align-items-center" style={{ minHeight: 'calc(100vh - 200px)' }}> 
+        <Spinner animation="border" variant="primary" style={{ width: '3rem', height: '3rem' }}/>
+        <span className="ms-3 fs-5">Cargando tickets...</span>
       </div>
     );
   }
 
   if (error) {
-    return <Alert variant="danger">Error: {error}</Alert>;
+    return <Alert variant="danger" className="m-3">Error: {error}</Alert>;
   }
 
   return (
     <div className="card shadow-sm">
-      <div className="card-header d-flex justify-content-between align-items-center">
-        <h1 className="h3 mb-0">Lista de Tickets</h1>
-        <Button variant="primary" onClick={() => navigate('/tickets/nuevo')}> {/* Ajusta la ruta para crear ticket */}
-          <i className="bi bi-plus-circle me-2"></i> {/* Si usas iconos de Bootstrap */}
+      <div className="card-header bg-light p-3 d-flex justify-content-between align-items-center">
+        <h1 className="h4 mb-0 text-dark">Lista de Tickets</h1>
+        <Button variant="primary" onClick={() => navigate('/tickets/nuevo')}>
+          <PlusCircle size={20} className="me-2" />
           Nuevo Ticket
         </Button>
       </div>
-      <div className="card-body">
+      <div className="card-body p-0"> 
         {tickets.length === 0 ? (
-          <p>No hay tickets para mostrar.</p>
+          <div className="p-3 text-center text-muted">No hay tickets para mostrar.</div>
         ) : (
-          <Table striped bordered hover responsive="sm" className="align-middle">
-            <thead>
+          <Table striped bordered hover responsive="lg" className="mb-0 align-middle text-sm"> 
+            <thead className="table-light">
               <tr>
                 <th># Ticket</th>
                 <th>Título</th>
@@ -121,32 +123,47 @@ const TicketsListPage: React.FC = () => {
                 <th>Prioridad</th>
                 <th>Estado</th>
                 <th>Tipo</th>
-                <th>Creado</th>
+                <th>Creado Por</th>
                 <th>Responsable</th>
-                <th>Acciones</th>
+                <th>Fecha Creación</th>
+                <th className="text-center">Acciones</th>
               </tr>
             </thead>
             <tbody>
               {tickets.map((ticket) => (
                 <tr key={ticket.ticketID}>
-                  <td>{ticket.numeroTicketFormateado}</td>
-                  <td>{ticket.titulo}</td>
-                  <td>{ticket.cliente ? `${ticket.cliente.nombre} ${ticket.cliente.apellido || ''}`.trim() : 'N/A'}</td>
-                  <td>{getPrioridadText(ticket.prioridad)}</td>
-                  <td>{getEstadoText(ticket.estado)}</td>
-                  <td>{ticket.tipoTicket}</td>
-                  <td>{formatDate(ticket.fechaCreacion)}</td>
-                  <td>{ticket.usuarioResponsable ? ticket.usuarioResponsable.nombreCompleto : 'No asignado'}</td>
                   <td>
-                    <Button variant="outline-info" size="sm" className="me-1" onClick={() => navigate(`/tickets/${ticket.ticketID}`)} title="Ver Detalles">
-                        <Eye size={16} />
+                    <Button variant="link" size="sm" onClick={() => handleViewDetails(ticket.ticketID)} className="p-0 fw-medium">
+                      {ticket.numeroTicketFormateado}
                     </Button>
-                    <Button variant="outline-warning" size="sm" className="me-1" onClick={() => navigate(`/tickets/editar/${ticket.ticketID}`)} title="Editar">
-                        <PencilSquare size={16} />
+                  </td>
+                  <td style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={ticket.titulo}>
+                    {ticket.titulo}
+                  </td>
+                  <td>{ticket.cliente ? `${ticket.cliente.nombre} ${ticket.cliente.apellido || ''}`.trim() : 'N/A'}</td>
+                  <td>
+                    <Badge bg={prioridadMap[ticket.prioridad]?.variant || 'secondary'}>
+                      {prioridadMap[ticket.prioridad]?.text || 'Desconocida'}
+                    </Badge>
+                  </td>
+                  <td>
+                    <Badge bg={estadoMap[ticket.estado]?.variant || 'secondary'} text={ (estadoMap[ticket.estado]?.variant === 'light' || estadoMap[ticket.estado]?.variant === 'warning') ? 'dark' : undefined}>
+                      {estadoMap[ticket.estado]?.text || 'Desconocido'}
+                    </Badge>
+                  </td>
+                  <td>{ticket.tipoTicket}</td>
+                  <td>{ticket.usuarioCreador ? ticket.usuarioCreador.nombreCompleto : 'N/A'}</td>
+                  <td>{ticket.usuarioResponsable ? ticket.usuarioResponsable.nombreCompleto : 'No asignado'}</td>
+                  <td>{formatDate(ticket.fechaCreacion)}</td>
+                  <td className="text-center">
+                    <Button variant="outline-info" size="sm" className="me-1 p-1" onClick={() => handleViewDetails(ticket.ticketID)} title="Ver Detalles">
+                        <Eye size={18} />
                     </Button>
-                    {/* El botón de eliminar requeriría lógica adicional y confirmación */}
-                    <Button variant="outline-danger" size="sm" title="Eliminar" onClick={() => alert(`Eliminar ticket ${ticket.ticketID} (funcionalidad no implementada)`)}>
-                        <Trash3 size={16} />
+                    <Button variant="outline-warning" size="sm" className="me-1 p-1" onClick={() => handleEditTicket(ticket.ticketID)} title="Editar">
+                        <PencilSquare size={18} />
+                    </Button>
+                    <Button variant="outline-danger" size="sm" className="p-1" title="Eliminar" onClick={() => handleDeleteTicket(ticket.ticketID)}>
+                        <Trash3 size={18} />
                     </Button>
                   </td>
                 </tr>
@@ -154,10 +171,15 @@ const TicketsListPage: React.FC = () => {
             </tbody>
           </Table>
         )}
-        {/* Aquí podrías añadir paginación si es necesario */}
       </div>
+      {tickets.length > 0 && (
+        <div className="card-footer bg-light text-muted text-sm p-2">
+          Total de tickets: {tickets.length}
+        </div>
+      )}
     </div>
   );
 };
 
 export default TicketsListPage;
+

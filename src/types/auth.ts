@@ -32,3 +32,10 @@ export interface UsuarioActual {
   nombre?: string; // Opcional, si quieres guardar Nombre y Apellido
   apellido?: string; // Opcional
 }
+
+export interface UsuarioSimpleDto { // <--- ASEGÚRATE QUE ESTO ESTÉ EXPORTADO
+  id: string;
+  username: string;
+  nombreCompleto: string;
+  email?: string | null;
+}
