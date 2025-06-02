@@ -33,6 +33,7 @@ const Navbar: React.FC<NavbarProps> = ({usuarioActual, logout}) => {
     <nav className="navbar navbar-expand-lg navbar-ligth bg-indigo-600 shadow-sm">
         <div className="container-fluid">
           <Link to="/dashboard" className="navbar-brand fw-bold fs-4">
+            <img src="../../public/icono.png" alt="" className='mx-2'/>
             MexaneTickets
           </Link>
           <button 

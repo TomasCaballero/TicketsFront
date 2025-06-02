@@ -53,6 +53,7 @@ export interface AdjuntoSimpleDto {
   fechaCarga: string; 
   urlUbicacion: string;
   usuarioCargador?: UsuarioSimpleDto | null;
+  descripcion?: string | null;
 }
 
 export interface TicketDto {
@@ -82,8 +83,6 @@ export interface TicketDto {
 }
 
 // --- DTOs para Creación de Tickets ---
-// Estos deben coincidir con los DTOs del backend
-
 export interface CrearTicketBaseDto {
   titulo: string;
   descripcion?: string | null;
@@ -99,13 +98,12 @@ export interface CrearTicketSoporteDto extends CrearTicketBaseDto {
 }
 
 export interface CrearTicketDesarrolloDto extends CrearTicketBaseDto {
-  fechaInicioPlanificada?: string | null; // En el backend son DateTime?, aquí string para el input date
-  fechaFinPlanificada?: string | null;   // En el backend son DateTime?, aquí string para el input date
+  fechaInicioPlanificada?: string | null; 
+  fechaFinPlanificada?: string | null;   
   horasEstimadas?: number | null;
 }
 
 // --- DTO para Actualización de Tickets ---
-// (Lo definimos aquí también para tener todos los tipos de ticket juntos)
 export interface ActualizarTicketDto {
     titulo?: string | null;
     descripcion?: string | null;
@@ -116,4 +114,30 @@ export interface ActualizarTicketDto {
     fechaInicioPlanificada?: string | null; 
     fechaFinPlanificada?: string | null;    
     horasEstimadas?: number | null;
+}
+
+// --- DTOs para Creación de Notas ---
+// (Estos son los que faltaban en el código que me pasaste)
+export interface CrearNotaBaseDto {
+    contenido: string;
+}
+
+export interface CrearNotaSoporteDto extends CrearNotaBaseDto {
+    tiempoDeTrabajo?: number | null; // Coincide con el DTO del backend
+}
+
+export interface CrearNotaDesarrolloDto extends CrearNotaBaseDto {
+    tiempoDeTrabajo: number; // Coincide con el DTO del backend (obligatorio y positivo)
+}
+
+// --- DTOs para Actualización de Notas ---
+// (Los añadimos aquí para tener todos los tipos de notas juntos)
+export interface ActualizarNotaBaseDto {
+    contenido?: string | null;
+}
+export interface ActualizarNotaSoporteDto extends ActualizarNotaBaseDto {
+    tiempoDeTrabajo?: number | null;
+}
+export interface ActualizarNotaDesarrolloDto extends ActualizarNotaBaseDto {
+    tiempoDeTrabajo?: number | null; // En el DTO de actualización, podría ser opcional si solo se cambia el contenido
 }

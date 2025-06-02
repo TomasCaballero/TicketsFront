@@ -4,7 +4,8 @@ import { Routes, Route, Navigate, Outlet, useNavigate } from 'react-router-dom';
 import LoginPage from './pages/LoginPage';
 import { useAuth } from './context/AuthContext';
 import TicketsListPage from './pages/TicketsListPage'; 
-import CrearTicketPage from './pages/CrearTicketPage'; // <-- IMPORTAR CrearTicketPage
+import CrearTicketPage from './pages/CrearTicketPage';
+import TicketDetailPage from './pages/TicketDetailPage';
 import Navbar from './components/Navbar'; // <-- IMPORTAR TU COMPONENTE Navbar
 
 // Asumiendo que UsuarioActual está definido en AuthContext o en tus tipos
@@ -105,8 +106,9 @@ function App() {
       
       <Route element={<ProtectedRoute />}> 
         <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/tickets/nuevo" element={<CrearTicketPage />} /> {/* <-- RUTA AÑADIDA */}
+        <Route path="/tickets/nuevo" element={<CrearTicketPage />} />
         <Route path="/tickets" element={<TicketsListPage />} /> 
+        <Route path="/tickets/:ticketId" element={<TicketDetailPage />} />
         <Route path="/clientes" element={<ClientesListPagePlaceholder />} />
         <Route path="/centros-costo" element={<CentrosCostoListPagePlaceholder />} />
         <Route path="/roles" element={<RolesPagePlaceholder />} />
