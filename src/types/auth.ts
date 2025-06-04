@@ -1,10 +1,8 @@
-// Coincide con LoginDto del backend
 export interface LoginDto {
   email: string;
-  password?: string; // Hacemos password opcional si el backend lo permite para otros flujos
+  password?: string; 
 }
 
-// Coincide con RegistroDto del backend
 export interface RegistroDto {
     username: string;
     email: string;
@@ -13,29 +11,23 @@ export interface RegistroDto {
     apellido: string;
 }
 
-// Coincide con RespuestaAuthDto del backend
 export interface RespuestaAuthDto {
   token: string;
-  expiracion: string; // O Date si lo parseas
+  expiracion: string; 
   usuarioId: string;
   username: string;
   email: string;
   roles: string[];
+  estaActivo: boolean;
 }
 
-// Para guardar la información del usuario actual en el frontend
 export interface UsuarioActual {
   id: string;
   username: string;
   email: string;
   roles: string[];
-  nombre?: string; // Opcional, si quieres guardar Nombre y Apellido
-  apellido?: string; // Opcional
-}
-
-export interface UsuarioSimpleDto { // <--- ASEGÚRATE QUE ESTO ESTÉ EXPORTADO
-  id: string;
-  username: string;
-  nombreCompleto: string;
-  email?: string | null;
+  nombre?: string; 
+  apellido?: string; 
+  estaActivo: boolean;
+  permisos?: string[]; // Lista de permisos del usuario
 }

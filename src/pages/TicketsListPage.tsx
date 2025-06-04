@@ -1,9 +1,8 @@
-// src/pages/TicketsListPage.tsx
 import React, { useEffect, useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom'; // useNavigate ya está importado
 import apiClient from '../services/apiClient';
-// CORRECCIÓN: Importar enums como valores, no solo como tipos
-import { type TicketDto, PrioridadTicketEnum, EstadoTicketEnum } from '../types/tickets'; 
+import type { TicketDto } from '../types/tickets'; 
+import { PrioridadTicketEnum, EstadoTicketEnum } from '../types/tickets';
 import Table from 'react-bootstrap/Table';
 import Button from 'react-bootstrap/Button';
 import Alert from 'react-bootstrap/Alert';
@@ -73,7 +72,7 @@ const TicketsListPage: React.FC = () => {
   };
 
   const handleEditTicket = (ticketId: string) => {
-    navigate(`/tickets/editar/${ticketId}`); 
+    navigate(`/tickets/editar/${ticketId}`); // <-- NAVEGACIÓN A LA PÁGINA DE EDICIÓN
   };
 
   const handleDeleteTicket = async (ticketId: string) => {
@@ -159,6 +158,7 @@ const TicketsListPage: React.FC = () => {
                     <Button variant="outline-info" size="sm" className="me-1 p-1" onClick={() => handleViewDetails(ticket.ticketID)} title="Ver Detalles">
                         <Eye size={18} />
                     </Button>
+                    {/* CAMBIO AQUÍ: onClick ahora llama a handleEditTicket */}
                     <Button variant="outline-warning" size="sm" className="me-1 p-1" onClick={() => handleEditTicket(ticket.ticketID)} title="Editar">
                         <PencilSquare size={18} />
                     </Button>
@@ -182,4 +182,3 @@ const TicketsListPage: React.FC = () => {
 };
 
 export default TicketsListPage;
-

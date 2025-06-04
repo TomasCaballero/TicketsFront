@@ -8,15 +8,23 @@ import Button from 'react-bootstrap/Button';
 import Image from 'react-bootstrap/Image';
 import Spinner from 'react-bootstrap/Spinner';
 import Alert from 'react-bootstrap/Alert';
-import { Download, FileEarmarkText, FileEarmarkImage, FileEarmarkZip, FileEarmarkPdf, FileEarmarkPlay, FileEarmarkMusic, Paperclip } from 'react-bootstrap-icons';
+import { Download, FileEarmarkText, FileEarmarkZip, FileEarmarkPlay, FileEarmarkMusic, Paperclip } from 'react-bootstrap-icons';
 
-// Importaciones para react-pdf
 import { Document, Page, pdfjs } from 'react-pdf';
-import 'react-pdf/dist/esm/Page/AnnotationLayer.css'; // Estilos necesarios para las anotaciones
-import 'react-pdf/dist/esm/Page/TextLayer.css'; // Estilos necesarios para la capa de texto
+import 'react-pdf/dist/esm/Page/AnnotationLayer.css'; 
+import 'react-pdf/dist/esm/Page/TextLayer.css'; 
 
-// Configurar el worker de pdf.js (puedes mover esto a tu main.tsx o App.tsx para configurarlo globalmente)
-pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+// SOLUCIÓN 1: Configurar worker con CDN (más confiable)
+// pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+
+// SOLUCIÓN 2: Para proyectos con Vite, descomenta estas líneas y comenta la línea de arriba
+// pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+//   'pdfjs-dist/build/pdf.worker.min.js',
+//   import.meta.url,
+// ).toString();
+
+// SOLUCIÓN 3: Para proyectos con Webpack, descomenta esta línea y comenta las otras
+pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
 
 interface ModalPrevisualizarAdjuntoProps {
   show: boolean;
@@ -29,14 +37,14 @@ const ModalPrevisualizarAdjunto: React.FC<ModalPrevisualizarAdjuntoProps> = ({
   handleClose,
   adjunto,
 }) => {
-  const [filePreviewData, setFilePreviewData] = useState<string | File | null>(null); // Puede ser URL (imagen) o File (PDF)
+  const [filePreviewData, setFilePreviewData] = useState<string | null>(null); 
   const [fileType, setFileType] = useState<'image' | 'pdf' | 'other'>('other');
   const [isLoadingPreview, setIsLoadingPreview] = useState<boolean>(false);
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [downloadError, setDownloadError] = useState<string | null>(null);
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
   const [numPdfPages, setNumPdfPages] = useState<number | null>(null);
-
+  const [currentPage, setCurrentPage] = useState<number>(1);
 
   useEffect(() => {
     let objectUrl: string | undefined = undefined;
@@ -48,21 +56,23 @@ const ModalPrevisualizarAdjunto: React.FC<ModalPrevisualizarAdjuntoProps> = ({
         setFileType('other');
         setFilePreviewData(null);
         setNumPdfPages(null);
+        setCurrentPage(1);
 
         setIsLoadingPreview(true);
         try {
           const response = await apiClient.get(`/api/adjuntos/${adjunto.adjuntoID}`, {
             responseType: 'blob',
           });
+          
           const blob = new Blob([response.data], { type: adjunto.tipoArchivo });
           objectUrl = window.URL.createObjectURL(blob);
 
           if (adjunto.tipoArchivo && adjunto.tipoArchivo.startsWith('image/')) {
             setFileType('image');
-            setFilePreviewData(objectUrl); // Usar ObjectURL para src de <img>
+            setFilePreviewData(objectUrl); 
           } else if (adjunto.tipoArchivo === 'application/pdf') {
             setFileType('pdf');
-            setFilePreviewData(objectUrl); // Usar ObjectURL para react-pdf
+            setFilePreviewData(objectUrl); 
           } else {
             setFileType('other');
           }
@@ -77,7 +87,6 @@ const ModalPrevisualizarAdjunto: React.FC<ModalPrevisualizarAdjuntoProps> = ({
 
     loadPreview();
 
-    // Limpiar el ObjectURL cuando el modal se cierra o el adjunto cambia
     return () => {
       if (objectUrl) {
         window.URL.revokeObjectURL(objectUrl);
@@ -87,6 +96,12 @@ const ModalPrevisualizarAdjunto: React.FC<ModalPrevisualizarAdjuntoProps> = ({
 
   const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
     setNumPdfPages(numPages);
+    setPreviewError(null); // Limpiar errores previos si se carga exitosamente
+  };
+
+  const onDocumentLoadError = (error: Error) => {
+    console.error('Error cargando PDF Document:', error);
+    setPreviewError(`Error al cargar el PDF: ${error.message}`);
   };
 
   const handleDownload = async () => {
@@ -94,8 +109,6 @@ const ModalPrevisualizarAdjunto: React.FC<ModalPrevisualizarAdjuntoProps> = ({
     setIsDownloading(true);
     setDownloadError(null);
     try {
-      // filePreviewData ya es el ObjectURL del blob si se cargó para previsualización
-      // Si no, lo obtenemos de nuevo. Para simplificar, lo obtenemos siempre aquí.
       const response = await apiClient.get(`/api/adjuntos/${adjunto.adjuntoID}`, {
         responseType: 'blob',
       });
@@ -117,11 +130,18 @@ const ModalPrevisualizarAdjunto: React.FC<ModalPrevisualizarAdjuntoProps> = ({
 
   const getFileIcon = () => {
     if (!adjunto || !adjunto.tipoArchivo) return <FileEarmarkText size={80} className="text-muted" />;
-    // No necesitamos el chequeo de imagen/pdf aquí ya que se maneja por fileType
     if (adjunto.tipoArchivo.includes('zip') || adjunto.tipoArchivo.includes('compressed')) return <FileEarmarkZip size={80} className="text-warning" />;
     if (adjunto.tipoArchivo.startsWith('audio/')) return <FileEarmarkMusic size={80} className="text-info" />;
     if (adjunto.tipoArchivo.startsWith('video/')) return <FileEarmarkPlay size={80} className="text-success" />;
     return <FileEarmarkText size={80} className="text-muted" />;
+  };
+
+  const goToPrevPage = () => {
+    setCurrentPage(prev => Math.max(prev - 1, 1));
+  };
+
+  const goToNextPage = () => {
+    setCurrentPage(prev => Math.min(prev + 1, numPdfPages || 1));
   };
 
   if (!adjunto) return null;
@@ -142,40 +162,89 @@ const ModalPrevisualizarAdjunto: React.FC<ModalPrevisualizarAdjuntoProps> = ({
           {isLoadingPreview ? (
             <Spinner animation="border" variant="primary" />
           ) : fileType === 'image' && filePreviewData ? (
-            <Image src={filePreviewData as string} alt={`Previsualización de ${adjunto.nombreArchivo}`} fluid style={{ maxHeight: '50vh', maxWidth: '100%' }} />
+            <Image 
+              src={filePreviewData} 
+              alt={`Previsualización de ${adjunto.nombreArchivo}`} 
+              fluid 
+              style={{ maxHeight: '50vh', maxWidth: '100%' }} 
+            />
           ) : fileType === 'pdf' && filePreviewData ? (
-            <div style={{ width: '100%', height: '50vh', overflowY: 'auto' }}>
+            <div style={{ width: '100%' }}>
               <Document
-                file={filePreviewData} // Puede ser URL, File object, o datos base64
+                file={filePreviewData} 
                 onLoadSuccess={onDocumentLoadSuccess}
-                onLoadError={(error) => {
-                  console.error('Error cargando PDF Document:', error);
-                  setPreviewError(`Error al cargar el PDF: ${error.message}`);
+                onLoadError={onDocumentLoadError}
+                loading={
+                  <div className="text-center p-3">
+                    <Spinner animation="border" variant="secondary" />
+                    <p className="mt-2">Cargando PDF...</p>
+                  </div>
+                }
+                error={
+                  <Alert variant="danger">
+                    No se pudo cargar el PDF. Intente descargar el archivo para verlo.
+                  </Alert>
+                }
+                options={{
+                  cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/cmaps/',
+                  cMapPacked: true,
                 }}
-                loading={<Spinner animation="border" variant="secondary" />}
-                error={<Alert variant="danger">No se pudo cargar el PDF.</Alert>}
               >
-                <Page 
-                    pageNumber={1} 
-                    width={500} // Puedes ajustar el ancho o hacerlo responsivo
-                    renderAnnotationLayer={true} // Para anotaciones
-                    renderTextLayer={true} // Para selección de texto
-                    onRenderError={() => console.error("Error renderizando página del PDF")}
-                />
+                <div style={{ maxHeight: '50vh', overflowY: 'auto', padding: '10px' }}>
+                  <Page 
+                    pageNumber={currentPage} 
+                    width={Math.min(500, window.innerWidth - 100)}
+                    renderAnnotationLayer={false} 
+                    renderTextLayer={false}
+                    onRenderError={(error) => {
+                      console.error("Error renderizando página del PDF:", error);
+                      setPreviewError("Error al renderizar la página del PDF");
+                    }}
+                  />
+                </div>
               </Document>
-              {numPdfPages && <p className="text-muted text-center mt-2">Página 1 de {numPdfPages}</p>}
+              
+              {numPdfPages && numPdfPages > 1 && (
+                <div className="d-flex justify-content-center align-items-center mt-3 gap-3">
+                  <Button 
+                    variant="outline-secondary" 
+                    size="sm" 
+                    onClick={goToPrevPage}
+                    disabled={currentPage <= 1}
+                  >
+                    ‹ Anterior
+                  </Button>
+                  <span className="text-muted">
+                    Página {currentPage} de {numPdfPages}
+                  </span>
+                  <Button 
+                    variant="outline-secondary" 
+                    size="sm" 
+                    onClick={goToNextPage}
+                    disabled={currentPage >= numPdfPages}
+                  >
+                    Siguiente ›
+                  </Button>
+                </div>
+              )}
+              
+              {numPdfPages === 1 && (
+                <p className="text-muted text-center mt-2">Página 1 de 1</p>
+              )}
             </div>
           ) : (
             <div className="my-4">{getFileIcon()}</div>
           )}
         </div>
 
-        <p><strong>Tipo:</strong> {adjunto.tipoArchivo}</p>
-        <p><strong>Tamaño:</strong> {adjunto.tamanoArchivoKB.toFixed(2)} KB</p>
-        <p><strong>Subido:</strong> {formatDate(adjunto.fechaCarga, true)} por {adjunto.usuarioCargador?.nombreCompleto || 'N/A'}</p>
-        {adjunto.descripcion && (
-          <p><strong>Descripción:</strong> {adjunto.descripcion}</p>
-        )}
+        <div className="mt-3">
+          <p><strong>Tipo:</strong> {adjunto.tipoArchivo}</p>
+          <p><strong>Tamaño:</strong> {adjunto.tamanoArchivoKB.toFixed(2)} KB</p>
+          <p><strong>Subido:</strong> {formatDate(adjunto.fechaCarga, true)} por {adjunto.usuarioCargador?.nombreCompleto || 'N/A'}</p>
+          {adjunto.descripcion && (
+            <p><strong>Descripción:</strong> {adjunto.descripcion}</p>
+          )}
+        </div>
       </Modal.Body>
       <Modal.Footer>
         <Button variant="outline-secondary" onClick={handleClose} disabled={isDownloading}>

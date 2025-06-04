@@ -13,6 +13,8 @@
   "dependencies": {
     "axios": "^1.9.0",
     "bootstrap": "^5.3.6",
+    "jwt-decode": "^4.0.0",
+    "pdfjs-dist": "^5.3.31",
     "react": "^19.1.0",
     "react-bootstrap": "^2.10.10",
     "react-bootstrap-icons": "^1.11.6",
