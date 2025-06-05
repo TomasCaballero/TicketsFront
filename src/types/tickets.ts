@@ -36,6 +36,12 @@ export const EstadoTicketEnum = {
   CERRADO: 7 as 7,
 };
 
+export type TipoClienteEnum = 1 | 2;
+export const TipoClienteEnum = {
+  Empresa: 1 as 1,
+  PersonaIndividual: 2 as 2,
+};
+
 export interface NotaSimpleDto {
   notaID: string;
   contenido: string;
@@ -139,5 +145,20 @@ export interface ActualizarNotaSoporteDto extends ActualizarNotaBaseDto {
     tiempoDeTrabajo?: number | null;
 }
 export interface ActualizarNotaDesarrolloDto extends ActualizarNotaBaseDto {
-    tiempoDeTrabajo?: number | null; // En el DTO de actualización, podría ser opcional si solo se cambia el contenido
+    tiempoDeTrabajo?: number | null; 
 }
+
+
+export interface ContactoParaClienteDto {
+  contactoID: string;
+  nombre: string;
+  apellido: string;
+  email: string;
+}
+export interface ClienteParaSelectorDto {
+  clienteID: string;
+  nombreCliente: string;
+  tipoCliente: 'Empresa' | 'PersonaIndividual' | number;
+  contactos?: ContactoParaClienteDto[];
+}
+

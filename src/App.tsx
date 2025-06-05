@@ -42,7 +42,7 @@ const MainLayout: React.FC = () => {
           navigate('/login');
         }} 
       />
-      <main className="flex-grow-1 bg-light p-4 p-md-5">
+      <main className="flex-grow-1 bg-light p-3">
         <Outlet /> 
       </main>
       <footer className="bg-white border-top">

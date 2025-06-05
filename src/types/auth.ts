@@ -29,5 +29,13 @@ export interface UsuarioActual {
   nombre?: string; 
   apellido?: string; 
   estaActivo: boolean;
-  permisos?: string[]; // Lista de permisos del usuario
+  permisos?: string[];
+}
+
+export interface UsuarioSimpleDto {
+  id: string;
+  username: string;
+  nombreCompleto: string;
+  email?: string | null;
+  roles: string[];
 }
