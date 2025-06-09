@@ -17,7 +17,8 @@ import { ArrowLeft, Paperclip, ChatDots, PersonFill, CalendarEvent, ClockHistory
 
 import ModalCrearNota from '../components/ModalCrearNota'; 
 import ModalSubirAdjunto from '../components/ModalSubirAdjunto'; 
-import ModalPrevisualizarAdjunto from '../components/ModalPrevisualizarAdjunto'; // <-- NUEVA IMPORTACIÓN
+import ModalPrevisualizarAdjunto from '../components/ModalPrevisualizarAdjunto';
+import ModalVerNota from '../components/ModalVerNota';
 
 const prioridadMap: Record<PrioridadTicketEnum, { text: string; variant: string }> = {
     [PrioridadTicketEnum.BAJA]: { text: 'Baja', variant: 'secondary' },
@@ -62,8 +63,11 @@ const TicketDetailPage: React.FC = () => {
 
   const [showCrearNotaModal, setShowCrearNotaModal] = useState<boolean>(false);
   const [showSubirAdjuntoModal, setShowSubirAdjuntoModal] = useState<boolean>(false); 
-  const [showPrevisualizarAdjuntoModal, setShowPrevisualizarAdjuntoModal] = useState<boolean>(false); // <-- NUEVO ESTADO
-  const [adjuntoSeleccionado, setAdjuntoSeleccionado] = useState<AdjuntoSimpleDto | null>(null); // <-- NUEVO ESTADO
+  const [showPrevisualizarAdjuntoModal, setShowPrevisualizarAdjuntoModal] = useState<boolean>(false);
+  const [adjuntoSeleccionado, setAdjuntoSeleccionado] = useState<AdjuntoSimpleDto | null>(null);
+
+  const [showVerNotaModal, setShowVerNotaModal] = useState<boolean>(false);
+  const [notaSeleccionada, setNotaSeleccionada] = useState<NotaSimpleDto | null>(null);
 
   const fetchTicketDetails = async (showLoader = true) => { 
     if (!ticketId) {
@@ -132,6 +136,11 @@ const TicketDetailPage: React.FC = () => {
             setError(err.response?.data?.message || "Error al eliminar el adjunto.");
         }
     }
+  };
+
+  const handleVerDetallesNota = (nota: NotaSimpleDto) => {
+    setNotaSeleccionada(nota);
+    setShowVerNotaModal(true);
   };
 
   if (loading) {
@@ -264,7 +273,8 @@ const TicketDetailPage: React.FC = () => {
         {ticket.notas.length > 0 ? (
             <ListGroup variant="flush">
             {ticket.notas.map(nota => (
-                <ListGroup.Item key={nota.notaID} className="p-3">
+                // --- 4. HACER EL ITEM CLICKEABLE ---
+                <ListGroup.Item key={nota.notaID} action onClick={() => handleVerDetallesNota(nota)} style={{ cursor: 'pointer' }} className="p-3">
                 <div className="d-flex w-100 justify-content-between">
                     <small className="text-muted">
                     <strong>{nota.usuarioCreador?.nombreCompleto || 'Usuario desconocido'}</strong> el {formatDate(nota.fechaCreacion, true)}
@@ -274,7 +284,10 @@ const TicketDetailPage: React.FC = () => {
                         {nota.tiempoDeTrabajo != null && ` (${nota.tiempoDeTrabajo} hs)`}
                     </Badge>
                 </div>
-                <p className="mb-1 mt-2">{nota.contenido}</p>
+                <p className="mb-1 mt-2 text-truncate">{nota.contenido}</p> {/* Usar text-truncate para un preview */}
+                 {nota.adjuntos && nota.adjuntos.length > 0 && (
+                    <small className="text-muted"><Paperclip/> {nota.adjuntos.length} adjunto(s)</small>
+                )}
                 </ListGroup.Item>
             ))}
             </ListGroup>
@@ -348,6 +361,35 @@ const TicketDetailPage: React.FC = () => {
                 show={showPrevisualizarAdjuntoModal}
                 handleClose={handleCerrarModalPrevisualizacion}
                 adjunto={adjuntoSeleccionado}
+            />
+        </>
+      )}
+
+      {ticketId && ticket && ( 
+        <>
+            <ModalCrearNota
+                show={showCrearNotaModal}
+                handleClose={() => setShowCrearNotaModal(false)}
+                ticketId={ticketId}
+                tipoTicketPadre={tipoTicketParaModal} 
+                onNotaAgregada={handleNuevaNotaAgregada}
+            />
+            <ModalSubirAdjunto
+                show={showSubirAdjuntoModal}
+                handleClose={() => setShowSubirAdjuntoModal(false)}
+                ticketId={ticketId} 
+                onAdjuntoAgregado={handleNuevoAdjuntoAgregado}
+            />
+            <ModalPrevisualizarAdjunto
+                show={showPrevisualizarAdjuntoModal}
+                handleClose={handleCerrarModalPrevisualizacion}
+                adjunto={adjuntoSeleccionado}
+            />
+            {/* RENDERIZAR EL NUEVO MODAL */}
+            <ModalVerNota
+                show={showVerNotaModal}
+                handleClose={() => setShowVerNotaModal(false)}
+                nota={notaSeleccionada}
             />
         </>
       )}

@@ -50,4 +50,8 @@ apiClient.interceptors.response.use(
   }
 );
 
+export const getApiBaseUrl = (): string => {
+    return apiClient.defaults.baseURL || '';
+};
+
 export default apiClient;

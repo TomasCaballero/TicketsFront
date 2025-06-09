@@ -48,7 +48,8 @@ export interface NotaSimpleDto {
   fechaCreacion: string; 
   usuarioCreador?: UsuarioSimpleDto | null;
   tiempoDeTrabajo?: number | null;
-  tipoNota: string; 
+  tipoNota: string;
+  adjuntos: AdjuntoSimpleDto[];
 }
 
 export interface AdjuntoSimpleDto {

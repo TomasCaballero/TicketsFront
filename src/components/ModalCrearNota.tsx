@@ -1,194 +1,222 @@
-// src/components/ModalCrearNota.tsx
-import React, { useState, type FormEvent, useEffect } from 'react';
+import React, { useState, type FormEvent, useEffect, useRef } from 'react';
 import apiClient from '../services/apiClient';
-import { useAuth } from '../context/AuthContext';
-import type{ CrearNotaSoporteDto, CrearNotaDesarrolloDto } from '../types/tickets'; 
-import type { NotaSimpleDto } from '../types/tickets'; 
+import type { NotaSimpleDto } from '../types/tickets';
 
 import Modal from 'react-bootstrap/Modal';
 import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
 import Alert from 'react-bootstrap/Alert';
 import Spinner from 'react-bootstrap/Spinner';
-
-// El tipo de ticket del padre determinará el tipo de nota a crear
-type TipoTicketPadre = 'Soporte' | 'Desarrollo';
+import ListGroup from 'react-bootstrap/ListGroup';
+import Image from 'react-bootstrap/Image';
+import { Trash3, PlusCircle } from 'react-bootstrap-icons';
 
 interface ModalCrearNotaProps {
   show: boolean;
   handleClose: () => void;
   ticketId: string;
-  tipoTicketPadre: TipoTicketPadre; // Nueva prop
+  tipoTicketPadre: 'Soporte' | 'Desarrollo';
   onNotaAgregada: (nuevaNota: NotaSimpleDto) => void;
 }
 
-const ModalCrearNota: React.FC<ModalCrearNotaProps> = ({ 
-  show, 
-  handleClose, 
-  ticketId, 
-  tipoTicketPadre, // Usar esta prop
-  onNotaAgregada 
-}) => {
-  const { usuarioActual } = useAuth();
-  // Ya no necesitamos estado para tipoNota, se deriva de tipoTicketPadre
-  const [contenido, setContenido] = useState<string>('');
-  const [tiempoDeTrabajo, setTiempoDeTrabajo] = useState<string>('');
+// Interfaz para manejar archivos localmente con previsualización
+interface ArchivoLocal {
+  id: string;
+  file: File;
+  previewUrl?: string;
+}
 
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+const ModalCrearNota: React.FC<ModalCrearNotaProps> = ({
+  show,
+  handleClose,
+  ticketId,
+  tipoTicketPadre,
+  onNotaAgregada
+}) => {
+  const [contenido, setContenido] = useState('');
+  const [tiempoDeTrabajo, setTiempoDeTrabajo] = useState('');
+  // Usaremos nuestro nuevo tipo para el estado de los archivos
+  const [archivos, setArchivos] = useState<ArchivoLocal[]>([]);
+  
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Referencia al input de archivo para poder hacer click en él programáticamente
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const resetForm = () => {
+    setContenido('');
+    setTiempoDeTrabajo('');
+    // Limpiar URLs de previsualización para liberar memoria
+    archivos.forEach(a => {
+      if (a.previewUrl) URL.revokeObjectURL(a.previewUrl);
+    });
+    setArchivos([]);
+    setError(null);
+  };
+
+  const handleModalClose = () => {
+    resetForm();
+    handleClose();
+  };
+
+  // Se ejecuta cuando el modal se cierra para limpiar las previsualizaciones
   useEffect(() => {
-    if (show) {
-      setContenido('');
-      setTiempoDeTrabajo('');
-      setError(null);
-      setIsSubmitting(false);
+    return () => {
+      archivos.forEach(a => {
+        if (a.previewUrl) URL.revokeObjectURL(a.previewUrl);
+      });
+    };
+  }, [archivos]);
+
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files) {
+      const nuevosArchivos = Array.from(event.target.files).map(file => {
+        const newFile: ArchivoLocal = {
+          id: `${file.name}-${file.lastModified}-${Math.random()}`,
+          file: file,
+          previewUrl: file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined
+        };
+        return newFile;
+      });
+      setArchivos(prev => [...prev, ...nuevosArchivos]);
     }
-  }, [show]);
+  };
+  
+  const handleRemoveFile = (idToRemove: string) => {
+    setArchivos(prev => {
+      const archivoAEliminar = prev.find(a => a.id === idToRemove);
+      if (archivoAEliminar?.previewUrl) {
+          URL.revokeObjectURL(archivoAEliminar.previewUrl);
+      }
+      return prev.filter(a => a.id !== idToRemove);
+    });
+  };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (!contenido.trim()) {
+        setError("El contenido de la nota es obligatorio.");
+        return;
+    }
+    if (tipoTicketPadre === 'Desarrollo' && (!tiempoDeTrabajo || parseFloat(tiempoDeTrabajo) <= 0)) {
+        setError("Para notas de desarrollo, el tiempo de trabajo debe ser un número positivo.");
+        return;
+    }
+    
     setIsSubmitting(true);
     setError(null);
 
-    if (!usuarioActual) {
-      setError("No se pudo identificar al usuario creador. Por favor, inicie sesión de nuevo.");
-      setIsSubmitting(false);
-      return;
-    }
+    const notaData = {
+        contenido,
+        tiempoDeTrabajo: tiempoDeTrabajo ? parseFloat(tiempoDeTrabajo) : undefined,
+        tipoNota: tipoTicketPadre,
+    };
 
-    if (!contenido.trim()) {
-        setError("El contenido de la nota no puede estar vacío.");
-        setIsSubmitting(false);
-        return;
+    const formData = new FormData();
+    formData.append('notaData', JSON.stringify(notaData));
+    
+    if (archivos.length > 0) {
+        archivos.forEach(archivoLocal => {
+            formData.append('archivos', archivoLocal.file);
+        });
     }
 
     try {
-      let nuevaNotaCreada: NotaSimpleDto | null = null;
-
-      if (tipoTicketPadre === 'Soporte') {
-        const data: CrearNotaSoporteDto = {
-          contenido,
-          tiempoDeTrabajo: tiempoDeTrabajo === '' ? undefined : parseFloat(tiempoDeTrabajo),
-        };
-        // El endpoint ahora es específico para notas de soporte en el backend
-        const response = await apiClient.post<NotaSimpleDto>(`/api/tickets/${ticketId}/notas/soporte`, data);
-        nuevaNotaCreada = response.data;
-      } else { // tipoTicketPadre es 'Desarrollo'
-        if (tiempoDeTrabajo === '' || parseFloat(tiempoDeTrabajo) <= 0) {
-            setError("El tiempo de trabajo es obligatorio y debe ser positivo para notas de desarrollo.");
-            setIsSubmitting(false);
-            return;
-        }
-        const data: CrearNotaDesarrolloDto = {
-          contenido,
-          tiempoDeTrabajo: parseFloat(tiempoDeTrabajo),
-        };
-        // El endpoint ahora es específico para notas de desarrollo en el backend
-        const response = await apiClient.post<NotaSimpleDto>(`/api/tickets/${ticketId}/notas/desarrollo`, data);
-        nuevaNotaCreada = response.data;
-      }
-
-      if (nuevaNotaCreada) {
-        onNotaAgregada(nuevaNotaCreada);
-        handleClose(); 
-      } else {
-        // Esto podría ocurrir si el backend devuelve null debido a la restricción de tipo de ticket
-        setError(`No se pudo crear la nota. Verifique que el tipo de nota sea compatible con el tipo de ticket (${tipoTicketPadre}).`);
-      }
-
+      const response = await apiClient.post<NotaSimpleDto>(`/api/tickets/${ticketId}/notas-con-adjuntos`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      
+      onNotaAgregada(response.data);
+      handleModalClose();
     } catch (err: any) {
-      if (err.response && err.response.data) {
-        const apiError = err.response.data;
-        const errorMessage = typeof apiError === 'string' 
-          ? apiError
-          : apiError.message || apiError.Message || (apiError.errors && JSON.stringify(apiError.errors)) || (apiError.Errors && apiError.Errors.map((e:any) => e.description || e).join(', ')) || 'Error al crear la nota.';
-        setError(errorMessage);
-      } else {
-        setError('Error de red o el servidor no responde.');
-      }
-      console.error("Error al crear nota:", err);
+      const apiError = err.response?.data;
+      const errorMessage = apiError?.message || apiError?.title || "Error al crear la nota.";
+      setError(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <Modal show={show} onHide={handleClose} backdrop="static" keyboard={false} centered>
+    <Modal show={show} onHide={handleModalClose} size="lg" backdrop="static">
       <Modal.Header closeButton>
-        <Modal.Title>Añadir Nueva Nota ({tipoTicketPadre})</Modal.Title> {/* Mostrar el tipo de nota que se creará */}
+        <Modal.Title>Añadir Nueva Nota de {tipoTicketPadre}</Modal.Title>
       </Modal.Header>
-      <Modal.Body>
-        {error && <Alert variant="danger" onClose={() => setError(null)} dismissible>{error}</Alert>}
-        <Form onSubmit={handleSubmit}>
-          {/* Ya no se necesita el selector de Tipo de Nota */}
-          {/* <Form.Group className="mb-3" controlId="tipoNotaControl"> ... </Form.Group> */}
-
-          <Form.Group className="mb-3" controlId="contenidoNotaControl">
-            <Form.Label>Contenido *</Form.Label>
+      <Form onSubmit={handleSubmit}>
+        <Modal.Body>
+          {error && <Alert variant="danger" onClose={() => setError(null)} dismissible>{error}</Alert>}
+          
+          <Form.Group className="mb-3">
+            <Form.Label>Contenido de la Nota *</Form.Label>
+            <Form.Control as="textarea" rows={5} value={contenido} onChange={(e) => setContenido(e.target.value)} required />
+          </Form.Group>
+          
+          <Form.Group className="mb-3">
+            <Form.Label>
+              Tiempo de Trabajo (Horas)
+              {tipoTicketPadre === 'Desarrollo' ? ' *' : ' (Opcional)'}
+            </Form.Label>
             <Form.Control
-              as="textarea"
-              rows={4}
-              placeholder="Escribe tu nota aquí..."
-              value={contenido}
-              onChange={(e) => setContenido(e.target.value)}
-              required
-              disabled={isSubmitting}
+              type="number"
+              step="0.1"
+              min="0"
+              value={tiempoDeTrabajo}
+              onChange={(e) => setTiempoDeTrabajo(e.target.value)}
+              placeholder="Ej: 1.5"
+              required={tipoTicketPadre === 'Desarrollo'}
             />
           </Form.Group>
 
-          {/* El campo TiempoDeTrabajo ahora depende de tipoTicketPadre */}
-          {tipoTicketPadre === 'Desarrollo' && (
-            <Form.Group className="mb-3" controlId="tiempoTrabajoDesarrolloControl">
-              <Form.Label>Tiempo de Trabajo (Horas) *</Form.Label>
-              <Form.Control
-                type="number"
-                placeholder="Ej: 2.5"
-                value={tiempoDeTrabajo}
-                onChange={(e) => setTiempoDeTrabajo(e.target.value)}
-                step="0.1"
-                min="0.01" 
-                required 
-                disabled={isSubmitting}
-              />
-              <Form.Text className="text-muted">
-                Obligatorio y debe ser positivo para notas de desarrollo.
-              </Form.Text>
-            </Form.Group>
-          )}
-
-          {tipoTicketPadre === 'Soporte' && (
-            <Form.Group className="mb-3" controlId="tiempoTrabajoSoporteControl">
-              <Form.Label>Tiempo de Trabajo (Horas) (Opcional)</Form.Label>
-              <Form.Control
-                type="number"
-                placeholder="Ej: 1.0"
-                value={tiempoDeTrabajo}
-                onChange={(e) => setTiempoDeTrabajo(e.target.value)}
-                step="0.1"
-                min="0"
-                disabled={isSubmitting}
-              />
-            </Form.Group>
-          )}
-
-          <div className="d-flex justify-content-end mt-4">
-            <Button variant="outline-secondary" onClick={handleClose} disabled={isSubmitting} className="me-2">
-              Cancelar
+          {/* ----- SECCIÓN DE ADJUNTOS MEJORADA ----- */}
+          <Form.Group className="mb-3">
+            <Form.Label>Adjuntos</Form.Label>
+            <input
+              type="file"
+              multiple
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              className="d-none" // Ocultamos el input real
+            />
+            <Button variant="outline-secondary" onClick={() => fileInputRef.current?.click()} className="w-100">
+                <PlusCircle className="me-2"/>
+                Seleccionar archivos...
             </Button>
-            <Button variant="primary" type="submit" disabled={isSubmitting}>
-              {isSubmitting ? (
-                <>
-                  <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" className="me-1" />
-                  Guardando...
-                </>
-              ) : (
-                'Guardar Nota'
-              )}
-            </Button>
-          </div>
-        </Form>
-      </Modal.Body>
+          </Form.Group>
+          
+          {archivos.length > 0 && (
+            <ListGroup>
+                {archivos.map((archivo) => (
+                    <ListGroup.Item key={archivo.id} className="d-flex justify-content-between align-items-center">
+                        <div className="d-flex align-items-center">
+                          {archivo.previewUrl && (
+                            <Image src={archivo.previewUrl} style={{width: '40px', height: '40px', objectFit: 'cover', marginRight: '10px'}} thumbnail />
+                          )}
+                          <span className="text-truncate" style={{maxWidth: '300px'}}>{archivo.file.name}</span>
+                          <span className="text-muted ms-2">({(archivo.file.size / 1024).toFixed(1)} KB)</span>
+                        </div>
+                        <Button variant="outline-danger" size="sm" onClick={() => handleRemoveFile(archivo.id)}>
+                            <Trash3 />
+                        </Button>
+                    </ListGroup.Item>
+                ))}
+            </ListGroup>
+          )}
+          {/* ----- FIN SECCIÓN DE ADJUNTOS ----- */}
+
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="outline-secondary" onClick={handleModalClose} disabled={isSubmitting}>
+            Cancelar
+          </Button>
+          <Button variant="primary" type="submit" disabled={isSubmitting}>
+            {isSubmitting ? (
+              <><Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" className="me-2"/> Guardando...</>
+            ) : ( 'Guardar Nota' )}
+          </Button>
+        </Modal.Footer>
+      </Form>
     </Modal>
   );
 };

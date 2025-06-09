@@ -25,6 +25,7 @@ import Select, { type MultiValue } from 'react-select';
 import InputGroup from 'react-bootstrap/InputGroup';
 import ListGroup from 'react-bootstrap/ListGroup';
 import ModalCrearCliente from '../components/ModalCrearCliente';
+import ModalCrearContacto from '../components/ModalCrearContacto'; 
 import ModalAnadirAdjunto from '../components/ModalAnadirAdjunto'; // <-- Usar el nuevo modal
 import { Modal } from 'react-bootstrap';
 import { Paperclip, Trash3, PlusCircle } from 'react-bootstrap-icons';
@@ -94,6 +95,7 @@ const CrearTicketPage: React.FC = () => {
   const [isUsuariosLoading, setIsUsuariosLoading] = useState<boolean>(true); 
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [showCrearContactoModal, setShowCrearContactoModal] = useState(false);
 
   useEffect(() => {
     return () => {
@@ -189,6 +191,31 @@ const CrearTicketPage: React.FC = () => {
     setClientes(prevClientes => [...prevClientes, nuevoCliente].sort((a,b) => a.nombreCliente.localeCompare(b.nombreCliente)));
     handleClienteSelect(nuevoCliente);
   };
+
+  const handleContactoCreadoEnModal = (nuevoContacto: ContactoParaClienteDto) => {
+    if (!selectedCliente) return;
+
+    // Crear el nuevo cliente actualizado con el nuevo contacto
+    const clienteActualizado: ClienteParaSelectorDto = {
+        ...selectedCliente,
+        contactos: [...(selectedCliente.contactos || []), nuevoContacto].sort((a,b) => a.nombre.localeCompare(b.nombre)),
+    };
+    
+    // Reemplazar el cliente viejo por el actualizado en la lista de clientes
+    setClientes(prevClientes => 
+        prevClientes.map(c => c.clienteID === clienteActualizado.clienteID ? clienteActualizado : c)
+    );
+
+    // Seleccionar el cliente actualizado
+    setSelectedCliente(clienteActualizado);
+    // Seleccionar el nuevo contacto en el dropdown
+    setContactoId(nuevoContacto.contactoID);
+    
+    setShowCrearContactoModal(false); // Cerrar el modal
+  };
+
+
+
   const validarFechasDesarrollo = (): string | null => {
     if (ticketType === 'Desarrollo' && fechaInicioPlanificada && fechaFinPlanificada) {
       if (new Date(fechaInicioPlanificada) >= new Date(fechaFinPlanificada)) {
@@ -296,6 +323,8 @@ const CrearTicketPage: React.FC = () => {
   const prioridadOptions = Object.entries(PrioridadTicketEnum).filter(([,v])=>typeof v ==='number').map(([k,v])=>({value:v as PrioridadTicketEnum,label:k.replace(/_/g, ' ')}));
   const contactosDelClienteSeleccionado: ContactoParaClienteDto[] = selectedCliente?.tipoCliente === TipoClienteEnum.Empresa ? selectedCliente.contactos ?? [] : [];
 
+  
+
   return (
     <>
       <Card className="shadow-sm">
@@ -355,7 +384,33 @@ const CrearTicketPage: React.FC = () => {
                   }
                   {selectedCliente && <small className="form-text text-muted">Seleccionado: {selectedCliente.nombreCliente}</small>}
                 </Form.Group>
-                {selectedCliente?.tipoCliente===TipoClienteEnum.Empresa && <Form.Group className="mb-3" controlId="contactoId"><Form.Label>Contacto *</Form.Label><Form.Select value={contactoId} onChange={(e)=>setContactoId(e.target.value)} required={contactosDelClienteSeleccionado.length>0} disabled={isSubmitting||contactosDelClienteSeleccionado.length===0}><option value="">{contactosDelClienteSeleccionado.length>0?"Seleccione...":"No hay contactos"}</option>{contactosDelClienteSeleccionado.map(con=>(<option key={con.contactoID} value={con.contactoID}>{`${con.nombre} ${con.apellido}`}</option>))}</Form.Select></Form.Group>}
+                {selectedCliente && selectedCliente.tipoCliente === TipoClienteEnum.Empresa && (
+              <Form.Group className="mb-3" controlId="contactoId">
+                <Form.Label>Contacto del Cliente {contactosDelClienteSeleccionado.length > 0 ? '*' : ''}</Form.Label>
+                {/* AÑADIR InputGroup para tener el botón al lado */}
+                <InputGroup>
+                    <Form.Select
+                      value={contactoId}
+                      onChange={(e) => setContactoId(e.target.value)}
+                      required={contactosDelClienteSeleccionado.length > 0} 
+                      disabled={isSubmitting || contactosDelClienteSeleccionado.length === 0}
+                    >
+                      <option value="">{contactosDelClienteSeleccionado.length > 0 ? "Seleccione un contacto..." : "No hay contactos disponibles"}</option>
+                      {contactosDelClienteSeleccionado.map(con => (
+                        <option key={con.contactoID} value={con.contactoID}>
+                          {`${con.nombre} ${con.apellido} (${con.email})`}
+                        </option>
+                      ))}
+                    </Form.Select>
+                    {/* Botón para abrir el nuevo modal */}
+                    <Button variant="outline-success" onClick={() => setShowCrearContactoModal(true)}>
+                        Nuevo Contacto
+                    </Button>
+                </InputGroup>
+                {selectedCliente.tipoCliente === TipoClienteEnum.Empresa && contactosDelClienteSeleccionado.length === 0 && 
+                 <small className="form-text text-warning">Este cliente empresa no tiene contactos. Puede agregar uno nuevo.</small>}
+              </Form.Group>
+            )}
                 <Form.Group className="mb-3" controlId="centroDeCostoBusqueda">
                   <Form.Label>Centro de Costo</Form.Label>
                   <Form.Control type="text" placeholder="Buscar centro de costo..." value={searchTermCentroDeCosto} onChange={(e)=>{setSearchTermCentroDeCosto(e.target.value);setSelectedCentroDeCosto(null);}} disabled={isSubmitting||centrosDeCosto.length===0}/>
@@ -441,7 +496,21 @@ const CrearTicketPage: React.FC = () => {
         onAdjuntoAnadido={handleAdjuntoAnadido}
       />
 
-      <ModalCrearCliente show={showCrearClienteModal} handleClose={()=>setShowCrearClienteModal(false)} onClienteCreado={handleClienteCreadoEnModal}/>
+      <ModalCrearCliente
+        show={showCrearClienteModal}
+        handleClose={() => setShowCrearClienteModal(false)}
+        onClienteCreado={handleClienteCreadoEnModal}
+      />
+
+      {selectedCliente && (
+        <ModalCrearContacto
+          show={showCrearContactoModal}
+          handleClose={() => setShowCrearContactoModal(false)}
+          clienteId={selectedCliente.clienteID}
+          clienteNombre={selectedCliente.nombreCliente}
+          onContactoCreado={handleContactoCreadoEnModal}
+        />
+      )}
       <Modal show={showCrearCentroDeCostoModal} onHide={()=>setShowCrearCentroDeCostoModal(false)} backdrop="static"><Modal.Header closeButton><Modal.Title>Crear Centro de Costo</Modal.Title></Modal.Header><Modal.Body><p>Pendiente.</p></Modal.Body></Modal>
     </>
   );
