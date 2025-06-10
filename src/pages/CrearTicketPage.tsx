@@ -1,12 +1,13 @@
 // src/pages/CrearTicketPage.tsx
 import React, { useState, useEffect, useMemo, type FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import apiClient from '../services/apiClient';
 import { useAuth } from '../context/AuthContext';
 import type { CrearTicketSoporteDto, CrearTicketDesarrolloDto } from '../types/tickets';
 import type { UsuarioSimpleDto } from '../types/auth';
 import { PrioridadTicketEnum, TipoClienteEnum } from '../types/tickets';
 import type { ClienteParaSelectorDto as ClienteParaSelectorDtoBase } from '../types/clientes';
+import { Editor } from '@tinymce/tinymce-react';
 
 // Extend the type locally to include cuit_RUC if missing in the imported type
 interface ClienteParaSelectorDto extends ClienteParaSelectorDtoBase {
@@ -25,11 +26,12 @@ import Select, { type MultiValue } from 'react-select';
 import InputGroup from 'react-bootstrap/InputGroup';
 import ListGroup from 'react-bootstrap/ListGroup';
 import ModalCrearCliente from '../components/ModalCrearCliente';
-import ModalCrearContacto from '../components/ModalCrearContacto'; 
+import ModalCrearContacto from '../components/ModalCrearContacto';
 import ModalAnadirAdjunto from '../components/ModalAnadirAdjunto'; // <-- Usar el nuevo modal
 import { Modal } from 'react-bootstrap';
 import { Paperclip, Trash3, PlusCircle } from 'react-bootstrap-icons';
 import Image from 'react-bootstrap/Image';
+import ModalCrearEditarCentroDeCosto from '../components/centros-costo/ModalCrearEditarCentroDeCosto';
 
 
 type TicketType = 'Soporte' | 'Desarrollo';
@@ -82,7 +84,7 @@ const CrearTicketPage: React.FC = () => {
   const [fechaInicioPlanificada, setFechaInicioPlanificada] = useState('');
   const [fechaFinPlanificada, setFechaFinPlanificada] = useState('');
   const [horasEstimadas, setHorasEstimadas] = useState<string>('');
-  
+
   const [archivosParaSubir, setArchivosParaSubir] = useState<ArchivoLocal[]>([]);
   const [showAnadirAdjuntoModal, setShowAnadirAdjuntoModal] = useState(false);
 
@@ -91,11 +93,17 @@ const CrearTicketPage: React.FC = () => {
   const [usuariosParaAsignar, setUsuariosParaAsignar] = useState<UsuarioSimpleDto[]>([]);
 
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [isDataLoading, setIsDataLoading] = useState<boolean>(true); 
-  const [isUsuariosLoading, setIsUsuariosLoading] = useState<boolean>(true); 
+  const [isDataLoading, setIsDataLoading] = useState<boolean>(true);
+  const [isUsuariosLoading, setIsUsuariosLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [showCrearContactoModal, setShowCrearContactoModal] = useState(false);
+
+  const [isClienteInputFocused, setIsClienteInputFocused] = useState(false);
+  const [isCentroCostoInputFocused, setIsCentroCostoInputFocused] = useState(false);
+
+  const { state: locationState } = useLocation();
+  const [isCentroCostoLocked, setIsCentroCostoLocked] = useState(false);
 
   useEffect(() => {
     return () => {
@@ -159,37 +167,77 @@ const CrearTicketPage: React.FC = () => {
     setSelectedParticipantes([]);
   }, [ticketType]);
 
+  useEffect(() => {
+    // Tipamos el estado recibido para seguridad
+    const defaultData = locationState as { defaultCentroDeCosto?: { centroDeCostoID: string; nombre: string } };
+
+    if (defaultData?.defaultCentroDeCosto) {
+      const { centroDeCostoID, nombre } = defaultData.defaultCentroDeCosto;
+
+      // Creamos un objeto que coincida con el tipo esperado por el selector
+      const cdcSeleccionado = { centroDeCostoID, nombre };
+
+      // Establecemos el estado para pre-seleccionar y bloquear el campo
+      setSelectedCentroDeCosto(cdcSeleccionado);
+      setSearchTermCentroDeCosto(nombre);
+      setIsCentroCostoLocked(true);
+    }
+  }, [locationState]);
+
   const opcionesUsuariosParaAsignar: SelectOption[] = useMemo(() =>
     usuariosParaAsignar.map(u => ({ value: u.id, label: u.nombreCompleto || u.username || u.id }))
-  , [usuariosParaAsignar]);
+    , [usuariosParaAsignar]);
 
   const filteredClientes = useMemo(() => {
-    if (!searchTermCliente) return [];
-    return clientes.filter(c =>
-      c.nombreCliente.toLowerCase().includes(searchTermCliente.toLowerCase()) ||
-      (c.cuit_RUC && c.cuit_RUC.includes(searchTermCliente))
-    ).slice(0, 10); 
-  }, [searchTermCliente, clientes]);
+    // Caso 1: El usuario está escribiendo algo
+    if (searchTermCliente) {
+      return clientes.filter(c =>
+        c.nombreCliente.toLowerCase().includes(searchTermCliente.toLowerCase()) ||
+        (c.cuit_RUC && c.cuit_RUC.includes(searchTermCliente))
+      ).slice(0, 10);
+    }
+    // Caso 2: El input está vacío pero tiene el foco
+    if (isClienteInputFocused) {
+      // Devolvemos los últimos 3 clientes de la lista como sugerencia
+      return clientes.slice(-3);
+    }
+    // Caso 3: No hay foco ni texto, no mostrar nada
+    return [];
+  }, [searchTermCliente, clientes, isClienteInputFocused]);
 
   const filteredCentrosDeCosto = useMemo(() => {
-    if (!searchTermCentroDeCosto) return [];
-    return centrosDeCosto.filter(cdc =>
-      cdc.nombre.toLowerCase().includes(searchTermCentroDeCosto.toLowerCase())
-    ).slice(0, 10);
-  }, [searchTermCentroDeCosto, centrosDeCosto]);
+    if (searchTermCentroDeCosto) {
+      return centrosDeCosto.filter(cdc =>
+        cdc.nombre.toLowerCase().includes(searchTermCentroDeCosto.toLowerCase())
+      ).slice(0, 10);
+    }
+    if (isCentroCostoInputFocused) {
+      return centrosDeCosto.slice(-3);
+    }
+    return [];
+  }, [searchTermCentroDeCosto, centrosDeCosto, isCentroCostoInputFocused]);
 
   const handleClienteSelect = (cliente: ClienteParaSelectorDto) => {
     setSelectedCliente(cliente);
     setSearchTermCliente(cliente.nombreCliente);
     setContactoId('');
+    setIsClienteInputFocused(false); // Ocultar la lista al seleccionar
   };
   const handleCentroDeCostoSelect = (cdc: CentroDeCostoParaSelectorDto) => {
     setSelectedCentroDeCosto(cdc);
     setSearchTermCentroDeCosto(cdc.nombre);
+    setIsCentroCostoInputFocused(false); // Ocultar la lista al seleccionar
   };
   const handleClienteCreadoEnModal = (nuevoCliente: ClienteParaSelectorDto) => {
-    setClientes(prevClientes => [...prevClientes, nuevoCliente].sort((a,b) => a.nombreCliente.localeCompare(b.nombreCliente)));
+    setClientes(prevClientes => [...prevClientes, nuevoCliente].sort((a, b) => a.nombreCliente.localeCompare(b.nombreCliente)));
     handleClienteSelect(nuevoCliente);
+  };
+
+  const handleCentroDeCostoCreadoEnModal = (nuevoCentroDeCosto?: CentroDeCostoParaSelectorDto) => {
+    if (!nuevoCentroDeCosto) return;
+    setCentrosDeCosto(prev => [...prev, nuevoCentroDeCosto].sort((a, b) => a.nombre.localeCompare(b.nombre)));
+    handleCentroDeCostoSelect(nuevoCentroDeCosto);
+    setShowCrearCentroDeCostoModal(false);
   };
 
   const handleContactoCreadoEnModal = (nuevoContacto: ContactoParaClienteDto) => {
@@ -197,20 +245,20 @@ const CrearTicketPage: React.FC = () => {
 
     // Crear el nuevo cliente actualizado con el nuevo contacto
     const clienteActualizado: ClienteParaSelectorDto = {
-        ...selectedCliente,
-        contactos: [...(selectedCliente.contactos || []), nuevoContacto].sort((a,b) => a.nombre.localeCompare(b.nombre)),
+      ...selectedCliente,
+      contactos: [...(selectedCliente.contactos || []), nuevoContacto].sort((a, b) => a.nombre.localeCompare(b.nombre)),
     };
-    
+
     // Reemplazar el cliente viejo por el actualizado en la lista de clientes
-    setClientes(prevClientes => 
-        prevClientes.map(c => c.clienteID === clienteActualizado.clienteID ? clienteActualizado : c)
+    setClientes(prevClientes =>
+      prevClientes.map(c => c.clienteID === clienteActualizado.clienteID ? clienteActualizado : c)
     );
 
     // Seleccionar el cliente actualizado
     setSelectedCliente(clienteActualizado);
     // Seleccionar el nuevo contacto en el dropdown
     setContactoId(nuevoContacto.contactoID);
-    
+
     setShowCrearContactoModal(false); // Cerrar el modal
   };
 
@@ -224,7 +272,7 @@ const CrearTicketPage: React.FC = () => {
     }
     return null;
   };
-  
+
   const handleAdjuntoAnadido = (file: File, descripcion: string) => {
     const nuevoAdjunto: ArchivoLocal = {
       id: `${file.name}-${file.lastModified}`,
@@ -237,11 +285,11 @@ const CrearTicketPage: React.FC = () => {
 
   const handleRemoveFile = (idToRemove: string) => {
     setArchivosParaSubir(prev => {
-        const archivoAEliminar = prev.find(a => a.id === idToRemove);
-        if (archivoAEliminar?.previewUrl) {
-            URL.revokeObjectURL(archivoAEliminar.previewUrl);
-        }
-        return prev.filter(a => a.id !== idToRemove)
+      const archivoAEliminar = prev.find(a => a.id === idToRemove);
+      if (archivoAEliminar?.previewUrl) {
+        URL.revokeObjectURL(archivoAEliminar.previewUrl);
+      }
+      return prev.filter(a => a.id !== idToRemove)
     });
   };
 
@@ -254,7 +302,7 @@ const CrearTicketPage: React.FC = () => {
     if (!usuarioActual) {
       setError("No se pudo identificar al usuario creador."); setIsSubmitting(false); return;
     }
-    if (!selectedCliente) { 
+    if (!selectedCliente) {
       setError("Debe seleccionar un cliente."); setIsSubmitting(false); return;
     }
     if (selectedCliente.tipoCliente === TipoClienteEnum.Empresa && !contactoId) {
@@ -266,9 +314,9 @@ const CrearTicketPage: React.FC = () => {
     }
 
     const participantesIds = selectedParticipantes.map(p => p.value);
-    
+
     const baseData = {
-      titulo, descripcion, prioridad: Number(prioridad) as PrioridadTicketEnum, clienteID: selectedCliente.clienteID, 
+      titulo, descripcion, prioridad: Number(prioridad) as PrioridadTicketEnum, clienteID: selectedCliente.clienteID,
       contactoID: contactoId || undefined, centroDeCostoID: selectedCentroDeCosto?.centroDeCostoID,
       usuarioResponsableID: usuarioResponsableId || undefined, participantesIds: participantesIds.length > 0 ? participantesIds : undefined,
     };
@@ -284,7 +332,7 @@ const CrearTicketPage: React.FC = () => {
         response = await apiClient.post<{ ticketID: string }>('/api/tickets/desarrollo', data);
       }
       ticketCreadoId = response.data.ticketID;
-      
+
       if (ticketCreadoId && archivosParaSubir.length > 0) {
         setSuccessMessage(`Ticket ${ticketCreadoId} creado. Subiendo ${archivosParaSubir.length} adjunto(s)...`);
         const uploadPromises = archivosParaSubir.map(archivoLocal => {
@@ -302,7 +350,7 @@ const CrearTicketPage: React.FC = () => {
       setTimeout(() => navigate('/tickets'), 2000);
 
     } catch (err: any) {
-      const errorMessage = ticketCreadoId 
+      const errorMessage = ticketCreadoId
         ? `El ticket ${ticketCreadoId} se creó, pero falló la subida de adjuntos.`
         : (err.response?.data?.message || err.message || 'Error al crear el ticket.');
       setError(errorMessage);
@@ -320,10 +368,10 @@ const CrearTicketPage: React.FC = () => {
     );
   }
 
-  const prioridadOptions = Object.entries(PrioridadTicketEnum).filter(([,v])=>typeof v ==='number').map(([k,v])=>({value:v as PrioridadTicketEnum,label:k.replace(/_/g, ' ')}));
+  const prioridadOptions = Object.entries(PrioridadTicketEnum).filter(([, v]) => typeof v === 'number').map(([k, v]) => ({ value: v as PrioridadTicketEnum, label: k.replace(/_/g, ' ') }));
   const contactosDelClienteSeleccionado: ContactoParaClienteDto[] = selectedCliente?.tipoCliente === TipoClienteEnum.Empresa ? selectedCliente.contactos ?? [] : [];
 
-  
+
 
   return (
     <>
@@ -362,7 +410,25 @@ const CrearTicketPage: React.FC = () => {
                 </Form.Group>
                 <Form.Group className="mb-4" controlId="descripcion">
                   <Form.Label>Descripción</Form.Label>
-                  <Form.Control as="textarea" rows={4} placeholder="Detalles del problema o tarea..." value={descripcion} onChange={(e) => setDescripcion(e.target.value)} disabled={isSubmitting} />
+                  <Editor
+                    apiKey='4diy8fren78ukba5i30x08jzf50dazp3g1w70stpafjir4n1' // <-- Pega tu API Key aquí
+                    value={descripcion}
+                    onEditorChange={(content, editor) => setDescripcion(content)}
+                    init={{
+                      height: 250,
+                      menubar: false,
+                      plugins: [
+                        'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+                        'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                        'insertdatetime', 'media', 'table', 'help', 'wordcount'
+                      ],
+                      toolbar: 'undo redo | blocks | ' +
+                        'bold italic forecolor | alignleft aligncenter ' +
+                        'alignright alignjustify | bullist numlist outdent indent | ' +
+                        'removeformat | help',
+                      content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }'
+                    }}
+                  />
                 </Form.Group>
               </Col>
               <Col md={6}>
@@ -370,13 +436,23 @@ const CrearTicketPage: React.FC = () => {
                 <Form.Group className="mb-3" controlId="clienteBusqueda">
                   <Form.Label>Cliente *</Form.Label>
                   <InputGroup>
-                    <Form.Control type="text" placeholder="Buscar cliente..." value={searchTermCliente} onChange={(e)=>{setSearchTermCliente(e.target.value);setSelectedCliente(null);setContactoId('');}} disabled={isSubmitting||clientes.length===0}/>
-                    <Button variant="outline-success" onClick={()=>setShowCrearClienteModal(true)} disabled={isSubmitting}>Nuevo</Button>
+                    <Form.Control
+                      type="text"
+                      placeholder="Buscar o hacer clic para ver recientes..."
+                      value={searchTermCliente}
+                      onChange={(e) => { setSearchTermCliente(e.target.value); setSelectedCliente(null); setContactoId(''); }}
+                      onFocus={() => setIsClienteInputFocused(true)}
+                      onBlur={() => setTimeout(() => setIsClienteInputFocused(false), 150)} // Delay para permitir el click
+                      disabled={isSubmitting || clientes.length === 0}
+                    />
+                    <Button variant="outline-success" onClick={() => setShowCrearClienteModal(true)}>Nuevo</Button>
                   </InputGroup>
-                  {searchTermCliente && filteredClientes.length > 0 && 
-                    <ListGroup className="mt-1 position-absolute" style={{zIndex:1000,width:'calc(100% - 2.5rem)'}}>
-                      {filteredClientes.map(c=>(
-                        <ListGroup.Item action key={c.clienteID} onClick={()=>handleClienteSelect(c)} type="button">
+
+                  {/* --- 4. CONDICIÓN DE RENDERIZADO DEL DESPLEGABLE SIMPLIFICADA --- */}
+                  {!selectedCliente && filteredClientes.length > 0 &&
+                    <ListGroup className="mt-1 position-absolute" style={{ zIndex: 1000, width: 'calc(100% - 2.5rem)' }}>
+                      {filteredClientes.map(c => (
+                        <ListGroup.Item action key={c.clienteID} onClick={() => handleClienteSelect(c)} type="button">
                           {c.nombreCliente} {c.cuit_RUC && `(${c.cuit_RUC})`}
                         </ListGroup.Item>
                       ))}
@@ -385,39 +461,53 @@ const CrearTicketPage: React.FC = () => {
                   {selectedCliente && <small className="form-text text-muted">Seleccionado: {selectedCliente.nombreCliente}</small>}
                 </Form.Group>
                 {selectedCliente && selectedCliente.tipoCliente === TipoClienteEnum.Empresa && (
-              <Form.Group className="mb-3" controlId="contactoId">
-                <Form.Label>Contacto del Cliente {contactosDelClienteSeleccionado.length > 0 ? '*' : ''}</Form.Label>
-                {/* AÑADIR InputGroup para tener el botón al lado */}
-                <InputGroup>
-                    <Form.Select
-                      value={contactoId}
-                      onChange={(e) => setContactoId(e.target.value)}
-                      required={contactosDelClienteSeleccionado.length > 0} 
-                      disabled={isSubmitting || contactosDelClienteSeleccionado.length === 0}
-                    >
-                      <option value="">{contactosDelClienteSeleccionado.length > 0 ? "Seleccione un contacto..." : "No hay contactos disponibles"}</option>
-                      {contactosDelClienteSeleccionado.map(con => (
-                        <option key={con.contactoID} value={con.contactoID}>
-                          {`${con.nombre} ${con.apellido} (${con.email})`}
-                        </option>
-                      ))}
-                    </Form.Select>
-                    {/* Botón para abrir el nuevo modal */}
-                    <Button variant="outline-success" onClick={() => setShowCrearContactoModal(true)}>
+                  <Form.Group className="mb-3" controlId="contactoId">
+                    <Form.Label>Contacto del Cliente {contactosDelClienteSeleccionado.length > 0 ? '*' : ''}</Form.Label>
+                    {/* AÑADIR InputGroup para tener el botón al lado */}
+                    <InputGroup>
+                      <Form.Select
+                        value={contactoId}
+                        onChange={(e) => setContactoId(e.target.value)}
+                        required={contactosDelClienteSeleccionado.length > 0}
+                        disabled={isSubmitting || contactosDelClienteSeleccionado.length === 0}
+                      >
+                        <option value="">{contactosDelClienteSeleccionado.length > 0 ? "Seleccione un contacto..." : "No hay contactos disponibles"}</option>
+                        {contactosDelClienteSeleccionado.map(con => (
+                          <option key={con.contactoID} value={con.contactoID}>
+                            {`${con.nombre} ${con.apellido} (${con.email})`}
+                          </option>
+                        ))}
+                      </Form.Select>
+                      {/* Botón para abrir el nuevo modal */}
+                      <Button variant="outline-success" onClick={() => setShowCrearContactoModal(true)}>
                         Nuevo Contacto
-                    </Button>
-                </InputGroup>
-                {selectedCliente.tipoCliente === TipoClienteEnum.Empresa && contactosDelClienteSeleccionado.length === 0 && 
-                 <small className="form-text text-warning">Este cliente empresa no tiene contactos. Puede agregar uno nuevo.</small>}
-              </Form.Group>
-            )}
+                      </Button>
+                    </InputGroup>
+                    {selectedCliente.tipoCliente === TipoClienteEnum.Empresa && contactosDelClienteSeleccionado.length === 0 &&
+                      <small className="form-text text-warning">Este cliente empresa no tiene contactos. Puede agregar uno nuevo.</small>}
+                  </Form.Group>
+                )}
                 <Form.Group className="mb-3" controlId="centroDeCostoBusqueda">
                   <Form.Label>Centro de Costo</Form.Label>
-                  <Form.Control type="text" placeholder="Buscar centro de costo..." value={searchTermCentroDeCosto} onChange={(e)=>{setSearchTermCentroDeCosto(e.target.value);setSelectedCentroDeCosto(null);}} disabled={isSubmitting||centrosDeCosto.length===0}/>
-                  {searchTermCentroDeCosto && filteredCentrosDeCosto.length>0 && 
-                    <ListGroup className="mt-1 position-absolute" style={{zIndex:999,width:'calc(100% - 2.5rem)'}}>
-                      {filteredCentrosDeCosto.map(cdc=>(
-                        <ListGroup.Item action key={cdc.centroDeCostoID} onClick={()=>handleCentroDeCostoSelect(cdc)} type="button">
+                  <InputGroup>
+                    <Form.Control
+                      type="text"
+                      placeholder="Buscar..."
+                      value={searchTermCentroDeCosto}
+                      onChange={(e) => { /* ... */ }}
+                      onFocus={() => setIsCentroCostoInputFocused(true)}
+                      onBlur={() => setTimeout(() => setIsCentroCostoInputFocused(false), 150)}
+                      disabled={isSubmitting || isCentroCostoLocked} // <-- Deshabilitado si está bloqueado
+                    />
+                    <Button variant="outline-success" onClick={() => setShowCrearCentroDeCostoModal(true)} disabled={isCentroCostoLocked}>
+                      Nuevo
+                    </Button>
+                  </InputGroup>
+
+                  {!selectedCentroDeCosto && filteredCentrosDeCosto.length > 0 &&
+                    <ListGroup className="mt-1 position-absolute" style={{ zIndex: 999, width: 'calc(100% - 2.5rem)' }}>
+                      {filteredCentrosDeCosto.map(cdc => (
+                        <ListGroup.Item action key={cdc.centroDeCostoID} onClick={() => handleCentroDeCostoSelect(cdc)} type="button">
                           {cdc.nombre}
                         </ListGroup.Item>
                       ))}
@@ -425,29 +515,29 @@ const CrearTicketPage: React.FC = () => {
                   }
                   {selectedCentroDeCosto && <small className="form-text text-muted">Seleccionado: {selectedCentroDeCosto.nombre}</small>}
                 </Form.Group>
-                <Row><Col md={6}><Form.Group className="mb-3" controlId="usuarioResponsableId"><Form.Label>Responsable</Form.Label><Form.Select value={usuarioResponsableId} onChange={(e)=>setUsuarioResponsableId(e.target.value)} disabled={isSubmitting||isUsuariosLoading||opcionesUsuariosParaAsignar.length===0}><option value="">{isUsuariosLoading?'Cargando...':'Ninguno'}</option>{opcionesUsuariosParaAsignar.map(u=>(<option key={u.value} value={u.value}>{u.label}</option>))}</Form.Select></Form.Group></Col><Col md={6}><Form.Group className="mb-4" controlId="participantesIds"><Form.Label>Participantes</Form.Label><Select isMulti options={opcionesUsuariosParaAsignar} className="basic-multi-select" classNamePrefix="select" placeholder={isUsuariosLoading?'Cargando...':'Seleccione...'} onChange={(s)=>setSelectedParticipantes(s as MultiValue<SelectOption>)} value={selectedParticipantes} isDisabled={isSubmitting||isUsuariosLoading} isClearable/></Form.Group></Col></Row>
+                <Row><Col md={6}><Form.Group className="mb-3" controlId="usuarioResponsableId"><Form.Label>Responsable</Form.Label><Form.Select value={usuarioResponsableId} onChange={(e) => setUsuarioResponsableId(e.target.value)} disabled={isSubmitting || isUsuariosLoading || opcionesUsuariosParaAsignar.length === 0}><option value="">{isUsuariosLoading ? 'Cargando...' : 'Ninguno'}</option>{opcionesUsuariosParaAsignar.map(u => (<option key={u.value} value={u.value}>{u.label}</option>))}</Form.Select></Form.Group></Col><Col md={6}><Form.Group className="mb-4" controlId="participantesIds"><Form.Label>Participantes</Form.Label><Select isMulti options={opcionesUsuariosParaAsignar} className="basic-multi-select" classNamePrefix="select" placeholder={isUsuariosLoading ? 'Cargando...' : 'Seleccione...'} onChange={(s) => setSelectedParticipantes(s as MultiValue<SelectOption>)} value={selectedParticipantes} isDisabled={isSubmitting || isUsuariosLoading} isClearable /></Form.Group></Col></Row>
               </Col>
             </Row>
             <hr />
-            <Row> 
-                {ticketType === 'Desarrollo' && (
-                  <Col md={6}>
-                    <h5 className="mb-3 mt-2 text-primary">Detalles de Desarrollo</h5>
-                    <Row>
-                      <Col md={6}><Form.Group className="mb-3" controlId="fechaInicioPlanificada"><Form.Label>Fecha Inicio Planificada</Form.Label><Form.Control type="date" value={fechaInicioPlanificada} onChange={(e)=>setFechaInicioPlanificada(e.target.value)} disabled={isSubmitting}/></Form.Group></Col>
-                      <Col md={6}><Form.Group className="mb-3" controlId="fechaFinPlanificada"><Form.Label>Fecha Fin Planificada</Form.Label><Form.Control type="date" value={fechaFinPlanificada} onChange={(e)=>setFechaFinPlanificada(e.target.value)} disabled={isSubmitting}/></Form.Group></Col>
-                    </Row>
-                    <Form.Group className="mb-4" controlId="horasEstimadas"><Form.Label>Horas Estimadas</Form.Label><Form.Control type="number" placeholder="Ej: 8.5" value={horasEstimadas} onChange={(e)=>setHorasEstimadas(e.target.value)} step="0.1" min="0" disabled={isSubmitting}/></Form.Group>
-                  </Col>
+            <Row>
+              {ticketType === 'Desarrollo' && (
+                <Col md={6}>
+                  <h5 className="mb-3 mt-2 text-primary">Detalles de Desarrollo</h5>
+                  <Row>
+                    <Col md={6}><Form.Group className="mb-3" controlId="fechaInicioPlanificada"><Form.Label>Fecha Inicio Planificada</Form.Label><Form.Control type="date" value={fechaInicioPlanificada} onChange={(e) => setFechaInicioPlanificada(e.target.value)} disabled={isSubmitting} /></Form.Group></Col>
+                    <Col md={6}><Form.Group className="mb-3" controlId="fechaFinPlanificada"><Form.Label>Fecha Fin Planificada</Form.Label><Form.Control type="date" value={fechaFinPlanificada} onChange={(e) => setFechaFinPlanificada(e.target.value)} disabled={isSubmitting} /></Form.Group></Col>
+                  </Row>
+                  <Form.Group className="mb-4" controlId="horasEstimadas"><Form.Label>Horas Estimadas</Form.Label><Form.Control type="number" placeholder="Ej: 8.5" value={horasEstimadas} onChange={(e) => setHorasEstimadas(e.target.value)} step="0.1" min="0" disabled={isSubmitting} /></Form.Group>
+                </Col>
               )}
-              
+
               <Col md={ticketType === 'Desarrollo' ? 6 : 12}>
-                 <Card className="mb-4">
+                <Card className="mb-4">
                   <Card.Header className="bg-light p-3 d-flex justify-content-between align-items-center">
-                     <h5 className="mb-0 text-dark"><Paperclip size={20} className="me-2" />Adjuntos</h5>
-                     <Button variant="outline-primary" size="sm" onClick={() => setShowAnadirAdjuntoModal(true)}>
-                        <PlusCircle size={18} className="me-1"/> Añadir Adjunto
-                     </Button>
+                    <h5 className="mb-0 text-dark"><Paperclip size={20} className="me-2" />Adjuntos</h5>
+                    <Button variant="outline-primary" size="sm" onClick={() => setShowAnadirAdjuntoModal(true)}>
+                      <PlusCircle size={18} className="me-1" /> Añadir Adjunto
+                    </Button>
                   </Card.Header>
                   {archivosParaSubir.length > 0 ? (
                     <ListGroup variant="flush">
@@ -455,19 +545,19 @@ const CrearTicketPage: React.FC = () => {
                         <ListGroup.Item key={archivo.id} className="p-2">
                           <Row className="align-items-center">
                             {archivo.previewUrl && (
-                                <Col xs="auto">
-                                    <Image src={archivo.previewUrl} thumbnail style={{width: '60px', height: '60px', objectFit: 'cover'}}/>
-                                </Col>
+                              <Col xs="auto">
+                                <Image src={archivo.previewUrl} thumbnail style={{ width: '60px', height: '60px', objectFit: 'cover' }} />
+                              </Col>
                             )}
                             <Col>
-                                <div className="fw-bold text-truncate">{archivo.file.name}</div>
-                                <div className="text-muted text-sm">{(archivo.file.size / 1024).toFixed(1)} KB</div>
-                                {archivo.descripcion && <div className="text-muted text-sm fst-italic">"{archivo.descripcion}"</div>}
+                              <div className="fw-bold text-truncate">{archivo.file.name}</div>
+                              <div className="text-muted text-sm">{(archivo.file.size / 1024).toFixed(1)} KB</div>
+                              {archivo.descripcion && <div className="text-muted text-sm fst-italic">"{archivo.descripcion}"</div>}
                             </Col>
                             <Col xs="auto">
-                                <Button variant="outline-danger" size="sm" className="p-1" onClick={() => handleRemoveFile(archivo.id)}>
-                                    <Trash3/>
-                                </Button>
+                              <Button variant="outline-danger" size="sm" className="p-1" onClick={() => handleRemoveFile(archivo.id)}>
+                                <Trash3 />
+                              </Button>
                             </Col>
                           </Row>
                         </ListGroup.Item>
@@ -489,7 +579,7 @@ const CrearTicketPage: React.FC = () => {
           </Form>
         </Card.Body>
       </Card>
-      
+
       <ModalAnadirAdjunto
         show={showAnadirAdjuntoModal}
         handleClose={() => setShowAnadirAdjuntoModal(false)}
@@ -511,7 +601,12 @@ const CrearTicketPage: React.FC = () => {
           onContactoCreado={handleContactoCreadoEnModal}
         />
       )}
-      <Modal show={showCrearCentroDeCostoModal} onHide={()=>setShowCrearCentroDeCostoModal(false)} backdrop="static"><Modal.Header closeButton><Modal.Title>Crear Centro de Costo</Modal.Title></Modal.Header><Modal.Body><p>Pendiente.</p></Modal.Body></Modal>
+      <ModalCrearEditarCentroDeCosto
+        show={showCrearCentroDeCostoModal}
+        handleClose={() => setShowCrearCentroDeCostoModal(false)}
+        onSuccess={handleCentroDeCostoCreadoEnModal}
+      // No pasamos la prop `centroDeCostoAEditar`, por lo que el modal funcionará en modo "Crear"
+      />
     </>
   );
 };

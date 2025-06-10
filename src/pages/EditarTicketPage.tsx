@@ -3,14 +3,17 @@ import React, { useState, useEffect, type FormEvent } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import apiClient from '../services/apiClient';
 import { useAuth } from '../context/AuthContext';
-import type { 
-    TicketDto, // Para poblar el formulario
-    ActualizarTicketDto, // Para enviar la actualización
-    ClienteSimpleDto,
-    CentroDeCostoSimpleDto,
-} from '../types/tickets'; 
+import { Editor } from '@tinymce/tinymce-react';
+import type {
+  TicketDto, // Para poblar el formulario
+  ActualizarTicketDto, // Para enviar la actualización
+  ClienteSimpleDto,
+  CentroDeCostoSimpleDto,
+} from '../types/tickets';
 import { PrioridadTicketEnum, EstadoTicketEnum } from '../types/tickets'; // Para el select de prioridad y estado
 import type { UsuarioSimpleDto } from '../types/auth';
+
+import { Permisos } from '../constants/permisos';
 
 import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
@@ -20,7 +23,7 @@ import Col from 'react-bootstrap/Col';
 import Card from 'react-bootstrap/Card';
 import Alert from 'react-bootstrap/Alert';
 import Spinner from 'react-bootstrap/Spinner';
-import { type MultiValue} from 'react-select'; // Para selectores
+import { type MultiValue } from 'react-select'; // Para selectores
 
 type TicketType = 'Soporte' | 'Desarrollo'; // El tipo de ticket no se puede cambiar
 
@@ -33,6 +36,7 @@ const EditarTicketPage: React.FC = () => {
   const { ticketId } = useParams<{ ticketId: string }>();
   const navigate = useNavigate();
   const { usuarioActual } = useAuth();
+  const {tienePermiso} = useAuth();
 
   // Estado para los datos originales del ticket
   const [ticketOriginal, setTicketOriginal] = useState<TicketDto | null>(null);
@@ -92,10 +96,10 @@ const EditarTicketPage: React.FC = () => {
         setClienteId(ticketData.cliente?.clienteID || ''); // Para mostrar
         setCentroDeCostoId(ticketData.centroDeCosto?.centroDeCostoID || '');
         setUsuarioResponsableId(ticketData.usuarioResponsable?.id || '');
-        
+
         const participantesActuales = ticketData.participantes.map(p => ({ value: p.id, label: p.nombreCompleto || p.username }));
         setSelectedParticipantes(participantesActuales);
-        
+
         setTicketType(ticketData.tipoTicket as TicketType);
 
         if (ticketData.tipoTicket === 'Desarrollo') {
@@ -121,8 +125,8 @@ const EditarTicketPage: React.FC = () => {
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!ticketId || !ticketOriginal) {
-        setError("No se pueden guardar los cambios, falta información del ticket original.");
-        return;
+      setError("No se pueden guardar los cambios, falta información del ticket original.");
+      return;
     }
     setIsSubmitting(true);
     setError(null);
@@ -141,24 +145,24 @@ const EditarTicketPage: React.FC = () => {
     };
 
     if (ticketOriginal.tipoTicket === 'Desarrollo') {
-      datosActualizados.fechaInicioPlanificada = (fechaInicioPlanificada || null) !== (ticketOriginal.fechaInicioPlanificada ? ticketOriginal.fechaInicioPlanificada.substring(0,10) : null) 
-        ? (fechaInicioPlanificada || null) 
+      datosActualizados.fechaInicioPlanificada = (fechaInicioPlanificada || null) !== (ticketOriginal.fechaInicioPlanificada ? ticketOriginal.fechaInicioPlanificada.substring(0, 10) : null)
+        ? (fechaInicioPlanificada || null)
         : undefined;
-      datosActualizados.fechaFinPlanificada = (fechaFinPlanificada || null) !== (ticketOriginal.fechaFinPlanificada ? ticketOriginal.fechaFinPlanificada.substring(0,10) : null)
+      datosActualizados.fechaFinPlanificada = (fechaFinPlanificada || null) !== (ticketOriginal.fechaFinPlanificada ? ticketOriginal.fechaFinPlanificada.substring(0, 10) : null)
         ? (fechaFinPlanificada || null)
         : undefined;
       datosActualizados.horasEstimadas = (horasEstimadas === '' ? null : parseFloat(horasEstimadas)) !== ticketOriginal.horasEstimadas
         ? (horasEstimadas === '' ? null : parseFloat(horasEstimadas))
         : undefined;
     }
-    
+
     // Filtrar propiedades undefined para no enviarlas si no cambiaron
     const payload = Object.fromEntries(Object.entries(datosActualizados).filter(([_, v]) => v !== undefined));
 
     if (Object.keys(payload).length === 0) {
-        setError("No se han realizado cambios para guardar.");
-        setIsSubmitting(false);
-        return;
+      setError("No se han realizado cambios para guardar.");
+      setIsSubmitting(false);
+      return;
     }
 
     try {
@@ -168,9 +172,9 @@ const EditarTicketPage: React.FC = () => {
     } catch (err: any) {
       if (err.response && err.response.data) {
         const apiError = err.response.data;
-        const errorMessage = typeof apiError === 'string' 
+        const errorMessage = typeof apiError === 'string'
           ? apiError
-          : apiError.message || apiError.Message || (apiError.errors && JSON.stringify(apiError.errors)) || (apiError.Errors && apiError.Errors.map((e:any) => e.description || e).join(', ')) || 'Error al actualizar el ticket.';
+          : apiError.message || apiError.Message || (apiError.errors && JSON.stringify(apiError.errors)) || (apiError.Errors && apiError.Errors.map((e: any) => e.description || e).join(', ')) || 'Error al actualizar el ticket.';
         setError(errorMessage);
       } else {
         setError('Error de red o el servidor no responde.');
@@ -192,19 +196,19 @@ const EditarTicketPage: React.FC = () => {
 
   if (error && !ticketOriginal) { // Si hay error y no se cargó el ticket, mostrar error principal
     return (
-        <Container className="mt-4">
-            <Alert variant="danger" onClose={() => setError(null)} dismissible>{error}</Alert>
-            <Button variant="outline-secondary" onClick={() => navigate('/tickets')}>Volver a la lista</Button>
-        </Container>
+      <Container className="mt-4">
+        <Alert variant="danger" onClose={() => setError(null)} dismissible>{error}</Alert>
+        <Button variant="outline-secondary" onClick={() => navigate('/tickets')}>Volver a la lista</Button>
+      </Container>
     );
   }
-  
+
   if (!ticketOriginal) { // Si no hay error pero tampoco ticket, es un estado inesperado
     return <Container className="mt-4"><Alert variant="warning">No se encontró el ticket para editar.</Alert></Container>;
   }
 
   const prioridadOptions = Object.entries(PrioridadTicketEnum)
-    .filter(([key, value]) => typeof value === 'number') 
+    .filter(([key, value]) => typeof value === 'number')
     .map(([key, value]) => ({ value: value as PrioridadTicketEnum, label: key }));
 
   const estadoOptions = Object.entries(EstadoTicketEnum)
@@ -243,14 +247,26 @@ const EditarTicketPage: React.FC = () => {
                   />
                 </Form.Group>
 
-                <Form.Group className="mb-3" controlId="descripcion">
+                <Form.Group className="mb-4" controlId="descripcion">
                   <Form.Label>Descripción</Form.Label>
-                  <Form.Control
-                    as="textarea"
-                    rows={4}
+                  <Editor
+                    apiKey="4diy8fren78ukba5i30x08jzf50dazp3g1w70stpafjir4n1" // <-- Pega tu API Key aquí
                     value={descripcion}
-                    onChange={(e) => setDescripcion(e.target.value)}
-                    disabled={isSubmitting}
+                    onEditorChange={(content, editor) => setDescripcion(content)}
+                    init={{
+                      height: 250,
+                      menubar: false,
+                      plugins: [
+                        'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+                        'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                        'insertdatetime', 'media', 'table', 'help', 'wordcount'
+                      ],
+                      toolbar: 'undo redo | blocks | ' +
+                        'bold italic forecolor | alignleft aligncenter ' +
+                        'alignright alignjustify | bullist numlist outdent indent | ' +
+                        'removeformat | help',
+                      content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }'
+                    }}
                   />
                 </Form.Group>
 
@@ -286,7 +302,7 @@ const EditarTicketPage: React.FC = () => {
                     </Form.Group>
                   </Col>
                 </Row>
-                
+
                 <Form.Group className="mb-3" controlId="clienteDisplay">
                   <Form.Label>Cliente</Form.Label>
                   <Form.Control type="text" value={ticketOriginal.cliente ? `${ticketOriginal.cliente.nombre} ${ticketOriginal.cliente.apellido || ''}`.trim() : 'N/A'} readOnly disabled />
@@ -384,19 +400,19 @@ const EditarTicketPage: React.FC = () => {
                 )}
 
                 <div className="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
-                    <Button variant="outline-secondary" onClick={() => navigate(`/tickets/${ticketId}`)} disabled={isSubmitting}>
-                        Cancelar
-                    </Button>
-                    <Button variant="primary" type="submit" disabled={isSubmitting || isLoadingData}>
-                        {isSubmitting ? (
-                        <>
-                            <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" className="me-2"/>
-                            Guardando...
-                        </>
-                        ) : (
-                        'Guardar Cambios'
-                        )}
-                    </Button>
+                  <Button variant="outline-secondary" onClick={() => navigate(`/tickets/${ticketId}`)} disabled={isSubmitting}>
+                    Cancelar
+                  </Button>
+                  <Button variant="primary" type="submit" disabled={isSubmitting || isLoadingData}>
+                    {isSubmitting ? (
+                      <>
+                        <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" className="me-2" />
+                        Guardando...
+                      </>
+                    ) : (
+                      'Guardar Cambios'
+                    )}
+                  </Button>
                 </div>
               </Form>
             </Card.Body>

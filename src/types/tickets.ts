@@ -42,6 +42,13 @@ export const TipoClienteEnum = {
   PersonaIndividual: 2 as 2,
 };
 
+export type TipoCentroCosto = 0 | 1 |2;
+export const TipoCentroCosto = {
+  PROYECTO: 0 as 1,
+  PRODUCTO: 1 as 2,
+  CONTRATO: 2 as 3,
+};
+
 export interface NotaSimpleDto {
   notaID: string;
   contenido: string;

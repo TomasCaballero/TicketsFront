@@ -1,5 +1,5 @@
 // src/types/clientes.ts
-import { TipoClienteEnum } from './tickets'; // O donde tengas la enum
+import { TipoClienteEnum, type TicketDto } from './tickets'; // O donde tengas la enum
 
 // DTO para el formulario de crear un nuevo contacto para un cliente existente
 export interface CrearContactoParaClienteDto {
@@ -22,6 +22,18 @@ export interface CrearClienteConContactosDto {
   contactosNuevos?: CrearContactoParaClienteDto[];
 }
 
+
+export interface ClienteDto {
+  clienteID: string;
+  nombreCliente: string;
+  tipoCliente: TipoClienteEnum;
+  cuiT_RUC?: string;
+  direccionFiscal?: string;
+  telefonoPrincipal?: string;
+  emailPrincipal?: string;
+  contactos?: ContactoParaClienteDto[];
+  tickets?: TicketDto[];
+}
 // Interfaz para el objeto Contacto que se RECIBE de la API (con su ID)
 // ¡ESTA ES LA INTERFAZ QUE FALTA!
 export interface ContactoParaClienteDto {
@@ -51,6 +63,39 @@ export interface ClienteParaSelectorDto {
   cuit_RUC?: string;
   contactos?: ContactoParaClienteDto[];
 }
-export const getApiBaseUrl = (): string => {
-    return apiClient.defaults.baseURL || '';
-};
+
+export interface ActualizarClienteDto {
+  nombreCliente: string;
+  cuit_RUC?: string;
+  direccionFiscal?: string;
+  telefonoPrincipal?: string;
+  emailPrincipal?: string;
+}
+
+export interface CrearClienteDto{
+  nombreCliente: string;
+  tipoCliente: TipoClienteEnum;
+  cuit_RUC?: string;
+  direccionFiscal?: string;
+  telefonoPrincipal?: string;
+  emailPrincipal?: string;
+  contactosNuevos?: CrearContactoParaClienteDto[];
+}
+
+export interface ActualizarContactoDto {
+  nombre?: string;
+  apellido?: string;
+  email?: string;
+  telefonoDirecto?: string;
+  cargo?: string;
+  esPrincipal?: boolean;
+}
+export interface ContactoDto {
+  contactoID: string;
+  nombre: string;
+  apellido: string;
+  email: string;
+  telefonoDirecto?: string;
+  cargo?: string;
+  esPrincipal?: boolean;
+}

@@ -9,6 +9,10 @@ import TicketDetailPage from './pages/TicketDetailPage';
 import EditarTicketPage from './pages/EditarTicketPage'; // <-- 1. IMPORTAR LA PÁGINA
 import Navbar from './components/Navbar'; 
 import GestionUsuariosPage from './pages/admin/GestionUsuariosPage'; 
+import CentrosCostoListPage from './pages/CentrosCostoListPage';
+import CentroDeCostoDetailPage from './pages/CentroDeCostoDetailPage';
+import ClientesListPage from './pages/ClientesListPage';
+import ClienteDetailPage from './pages/ClienteDetailPage';
 
 // (El resto de las interfaces y componentes MainLayout, ProtectedRoute, DashboardPage, etc., no cambian)
 // ...
@@ -118,10 +122,12 @@ function App() {
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/tickets/nuevo" element={<CrearTicketPage />} />
         <Route path="/tickets/:ticketId" element={<TicketDetailPage />} /> 
-        <Route path="/tickets/editar/:ticketId" element={<EditarTicketPage />} /> {/* <-- 2. RUTA AGREGADA */}
+        <Route path="/tickets/editar/:ticketId" element={<EditarTicketPage />} />
         <Route path="/tickets" element={<TicketsListPage />} /> 
-        <Route path="/clientes" element={<ClientesListPagePlaceholder />} />
-        <Route path="/centros-costo" element={<CentrosCostoListPagePlaceholder />} />
+        <Route path="/centros-costo" element={<CentrosCostoListPage />} />
+        <Route path="/centros-costo/:centroDeCostoId" element={<CentroDeCostoDetailPage />} />
+        <Route path="/clientes" element={<ClientesListPage />} />
+        <Route path="/clientes/:clienteId" element={<ClienteDetailPage />} />
         
         <Route 
             path="/admin/usuarios" 
