@@ -25,7 +25,7 @@ export interface UsuarioAdminDto {
 export interface CrearUsuarioPorAdminDto {
   username: string;
   email: string;
-  password?: string; // El backend lo requiere, pero podría ser opcional si se genera
+  password?: string;
   nombre: string;
   apellido: string;
   estaActivo: boolean;

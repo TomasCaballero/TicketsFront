@@ -32,7 +32,6 @@ const Navbar: React.FC<NavbarProps> = ({ usuarioActual, logout }) => {
 
   const navLinks = [...navLinksBase];
   if (esAdminYActivo) {
-    // navLinks.push({ to: "/roles", text: "Roles" }); 
     navLinks.push({ to: "/admin/usuarios", text: "Configuración" }); 
   }
 

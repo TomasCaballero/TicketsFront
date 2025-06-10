@@ -105,7 +105,7 @@ const ModalCrearCliente: React.FC<ModalCrearClienteProps> = ({
     const clienteData: CrearClienteConContactosDto = {
       nombreCliente,
       tipoCliente,
-      cuit_RUC: cuitRuc || undefined, // Enviar undefined si está vacío
+      cuit_RUC: cuitRuc || undefined,
       direccionFiscal: direccionFiscal || undefined,
       telefonoPrincipal: telefonoPrincipal || undefined,
       emailPrincipal: emailPrincipal || undefined,
@@ -113,10 +113,8 @@ const ModalCrearCliente: React.FC<ModalCrearClienteProps> = ({
     };
 
     try {
-      // Asumimos que el backend devuelve un objeto del tipo ClienteCreadoDto
       const response = await apiClient.post<ClienteCreadoDto>('/api/clientes', clienteData);
       
-      // Mapear la respuesta a ClienteParaSelectorDto para pasarla al padre
       const nuevoClienteParaSelector: ClienteParaSelectorDto = {
           clienteID: response.data.clienteID,
           nombreCliente: response.data.nombreCliente,

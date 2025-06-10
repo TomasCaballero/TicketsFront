@@ -1,7 +1,7 @@
 import React, { useState, type FormEvent, useEffect } from 'react';
-import apiClient from '../../services/apiClient'; // Ajusta la ruta
-import type { RolDto } from '../../types/roles'; // Ajusta la ruta
-import type { CrearRolDto } from '../../types/roles'; // Necesitaremos este tipo
+import apiClient from '../../services/apiClient';
+import type { RolDto } from '../../types/roles';
+import type { CrearRolDto } from '../../types/roles'; 
 
 import Modal from 'react-bootstrap/Modal';
 import Form from 'react-bootstrap/Form';
@@ -12,7 +12,7 @@ import Spinner from 'react-bootstrap/Spinner';
 interface ModalCrearRolProps {
   show: boolean;
   handleClose: () => void;
-  onRolCreado: (nuevoRol: RolDto) => void; // Callback para actualizar la lista en la página padre
+  onRolCreado: (nuevoRol: RolDto) => void;
 }
 
 const ModalCrearRol: React.FC<ModalCrearRolProps> = ({ show, handleClose, onRolCreado }) => {
@@ -20,7 +20,6 @@ const ModalCrearRol: React.FC<ModalCrearRolProps> = ({ show, handleClose, onRolC
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Resetear el formulario cuando el modal se muestra
   useEffect(() => {
     if (show) {
       setNombreRol('');
@@ -41,20 +40,10 @@ const ModalCrearRol: React.FC<ModalCrearRolProps> = ({ show, handleClose, onRolC
     const rolParaCrear: CrearRolDto = { nombreRol: nombreRol.trim() };
 
     try {
-      // El backend en RolesController > CreateRole devuelve un 201 Created
-      // con un objeto { message: "...", id: "..." } o el rol creado.
-      // Asumiremos que devuelve el RolDto o algo que podamos usar.
-      // Si solo devuelve un mensaje, necesitaremos refetchear la lista de roles.
       const response = await apiClient.post<RolDto>('/api/roles', rolParaCrear); 
       
-      // Si la API devuelve el rol completo (con ID generado por el backend):
       onRolCreado(response.data); 
       
-      // Si la API solo devuelve un mensaje o el ID, y necesitas el objeto RolDto completo:
-      // Podrías hacer un fetchRoles() en la página padre después de cerrar el modal,
-      // o si el response.data tiene el ID:
-      // onRolCreado({ id: response.data.id, nombre: nombreRol.trim() }); // Asumiendo que response.data.id existe
-
       handleClose();
     } catch (err: any) {
       if (err.response && err.response.data) {

@@ -1,19 +1,19 @@
 import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import apiClient from '../services/apiClient'; 
 import type { LoginDto, RespuestaAuthDto, UsuarioActual } from '../types/auth'; 
-import { jwtDecode, type JwtPayload } from 'jwt-decode'; // Importar jwt-decode
+import { jwtDecode, type JwtPayload } from 'jwt-decode';
 import { Spinner } from 'react-bootstrap';
 
-// Interfaz para el token decodificado, incluyendo nuestros claims personalizados
+
 interface DecodedToken extends JwtPayload {
-  nameid?: string; // ID del usuario (del claim ClaimTypes.NameIdentifier)
-  sub?: string;    // Username (del claim JwtRegisteredClaimNames.Sub)
-  email?: string;  // Email
-  role?: string | string[]; // Roles (del claim ClaimTypes.Role)
-  Permission?: string | string[]; // Nuestros permisos personalizados (del claim ServicioRoles.TIPO_CLAIM_PERMISO)
-  nombre?: string; // Claim "nombre"
-  apellido?: string; // Claim "apellido"
-  estaActivo?: string; // Claim "estaActivo" (vendrá como string "true" o "false")
+  nameid?: string; 
+  sub?: string;   
+  email?: string; 
+  role?: string | string[]; 
+  Permission?: string | string[]; 
+  nombre?: string; 
+  apellido?: string;
+  estaActivo?: string; 
 }
 
 interface AuthContextType {
@@ -23,7 +23,7 @@ interface AuthContextType {
   login: (loginDto: LoginDto) => Promise<RespuestaAuthDto>; 
   logout: () => void;
   isLoading: boolean;
-  tienePermiso: (permisoRequerido: string) => boolean; // Nueva función para verificar permisos
+  tienePermiso: (permisoRequerido: string) => boolean; 
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -50,47 +50,44 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const cargarUsuarioDesdeToken = (currentToken: string) => {
     try {
       const decoded = jwtDecode<DecodedToken>(currentToken);
-      if (decoded && decoded.exp && decoded.exp * 1000 > Date.now()) { // Verificar expiración
+      if (decoded && decoded.exp && decoded.exp * 1000 > Date.now()) {
         const isActive = decoded.estaActivo === 'true';
         const userData: UsuarioActual = {
           id: decoded.nameid || '',
           username: decoded.sub || '',
           email: decoded.email || '',
           roles: parseRoles(decoded.role),
-          permisos: parsePermissions(decoded.Permission), // Extraer y parsear permisos
+          permisos: parsePermissions(decoded.Permission),
           estaActivo: isActive,
           nombre: decoded.nombre,
           apellido: decoded.apellido,
         };
         setUsuarioActual(userData);
-        setIsAuthenticated(isActive); // Solo autenticado si está activo
-        localStorage.setItem('usuarioActual', JSON.stringify(userData)); // Guardar usuario con permisos
+        setIsAuthenticated(isActive); 
+        localStorage.setItem('usuarioActual', JSON.stringify(userData)); 
         return isActive;
       } else {
         console.warn("Token expirado o inválido al cargar desde token.");
-        return false; // Token expirado
+        return false; 
       }
     } catch (e) {
       console.error("Error decodificando token al cargar:", e);
-      return false; // Error decodificando
+      return false; 
     }
   };
 
 
   useEffect(() => {
     const storedToken = localStorage.getItem('authToken');
-    // Ya no cargamos 'usuarioActual' directamente de localStorage para asegurar que los permisos
-    // y el estado 'estaActivo' vengan del token o de una fuente fresca.
-    // Si solo hay token, intentamos decodificarlo.
+
     if (storedToken) {
       setToken(storedToken);
       if (!cargarUsuarioDesdeToken(storedToken)) {
-        // Si cargarUsuarioDesdeToken devuelve false (ej. token expirado o usuario inactivo), limpiamos.
-        logout(); // Llama a logout para limpiar todo
+        logout();
       }
     }
     setIsLoading(false); 
-  }, []); // Se ejecuta solo al montar
+  }, []); 
 
   const login = async (loginDto: LoginDto): Promise<RespuestaAuthDto> => {
     try {
@@ -104,7 +101,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       localStorage.setItem('authToken', apiToken);
       setToken(apiToken);
-      cargarUsuarioDesdeToken(apiToken); // Decodifica el nuevo token para obtener todos los datos
+      cargarUsuarioDesdeToken(apiToken);
       
       return response.data; 
     } catch (error: any) {
@@ -115,7 +112,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const logout = () => {
     localStorage.removeItem('authToken');
-    localStorage.removeItem('usuarioActual'); // Asegurarse de limpiar esto también
+    localStorage.removeItem('usuarioActual'); 
     setToken(null);
     setUsuarioActual(null);
     setIsAuthenticated(false);

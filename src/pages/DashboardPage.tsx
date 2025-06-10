@@ -19,7 +19,6 @@ const DashboardPage: React.FC = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        // Ahora cargamos los tickets para todos los roles, el backend ya los filtra.
         const [usuariosRes, ticketsRes] = await Promise.all([
           usuarioActual?.roles.includes('Administrador') ? apiClient.get<UsuarioAdminDto[]>('/api/admin/usuarios') : Promise.resolve({ data: [] }),
           apiClient.get<TicketDto[]>('/api/tickets')
@@ -35,7 +34,6 @@ const DashboardPage: React.FC = () => {
     fetchData();
   }, [usuarioActual]);
 
-  // --- Lógica para Widgets de Administrador ---
   const usuariosPendientes = useMemo(() => 
     usuarios.filter(u => !u.estaActivo), 
   [usuarios]);
@@ -44,15 +42,14 @@ const DashboardPage: React.FC = () => {
     tickets.filter(t => !t.usuarioResponsable && t.estado !== EstadoTicketEnum.RESUELTO && t.estado !== EstadoTicketEnum.CERRADO),
   [tickets]);
 
-  // --- 1. Lógica para Widgets de Soporte/Desarrollo ---
   const misTicketsAsignados = useMemo(() =>
     tickets.filter(t => t.usuarioResponsable?.id === usuarioActual?.id && t.estado !== EstadoTicketEnum.RESUELTO && t.estado !== EstadoTicketEnum.CERRADO)
-      .sort((a, b) => a.prioridad > b.prioridad ? -1 : 1), // Ordenar por prioridad
+      .sort((a, b) => a.prioridad > b.prioridad ? -1 : 1), 
   [tickets, usuarioActual]);
 
   const proximasEntregas = useMemo(() =>
     tickets.filter(t => t.tipoTicket === 'Desarrollo' && t.fechaFinPlanificada && (t.estado !== EstadoTicketEnum.RESUELTO && t.estado !== EstadoTicketEnum.CERRADO))
-      .sort((a, b) => new Date(a.fechaFinPlanificada!).getTime() - new Date(b.fechaFinPlanificada!).getTime()), // Ordenar por fecha más cercana
+      .sort((a, b) => new Date(a.fechaFinPlanificada!).getTime() - new Date(b.fechaFinPlanificada!).getTime()), 
   [tickets]);
 
   if (loading) return <div className="text-center p-5"><Spinner animation="border" /></div>;
@@ -65,7 +62,6 @@ const DashboardPage: React.FC = () => {
       <hr />
       
       <Row>
-        {/* --- WIDGETS PARA EL ROL DE ADMINISTRADOR --- */}
         {usuarioActual?.roles.includes('Administrador') && (
           <>
             <Col md={6} className="mb-4">
@@ -80,7 +76,6 @@ const DashboardPage: React.FC = () => {
                     usuariosPendientes.map(u => (
                       <ListGroup.Item key={u.id} className="d-flex justify-content-between align-items-center">
                         {u.nombre} {u.apellido} ({u.email})
-                        {/* El botón podría llevar a la página de gestión o activar directamente */}
                         <Button as={Link as any} to="/admin/usuarios" variant="outline-success" size="sm">Gestionar</Button>
                       </ListGroup.Item>
                     ))
@@ -137,7 +132,6 @@ const DashboardPage: React.FC = () => {
           </Col>
         )}
 
-        {/* --- WIDGET EXCLUSIVO PARA DESARROLLADORES --- */}
         {usuarioActual?.roles.includes('Desarrollador') && (
           <Col md={6} className="mb-4">
             <Card className="shadow-sm h-100">

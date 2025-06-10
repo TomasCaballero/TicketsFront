@@ -1,7 +1,6 @@
 // src/components/ModalCrearContacto.tsx
 import React, { useState, type FormEvent } from 'react';
 import apiClient from '../services/apiClient';
-// Asegúrate de tener estos tipos definidos en un archivo como src/types/clientes.ts
 import type { 
     ContactoParaClienteDto,
     CrearContactoParaClienteDto,
@@ -18,8 +17,8 @@ import Spinner from 'react-bootstrap/Spinner';
 interface ModalCrearContactoProps {
   show: boolean;
   handleClose: () => void;
-  clienteId: string; // El ID del cliente al que se le agregará el contacto
-  clienteNombre: string; // Para mostrar en el título
+  clienteId: string; 
+  clienteNombre: string; 
   onContactoCreado: (nuevoContacto: ContactoParaClienteDto) => void;
 }
 
@@ -30,7 +29,6 @@ const ModalCrearContacto: React.FC<ModalCrearContactoProps> = ({
   clienteNombre,
   onContactoCreado
 }) => {
-  // Estados para el formulario del Contacto
   const [nombre, setNombre] = useState('');
   const [apellido, setApellido] = useState('');
   const [email, setEmail] = useState('');
@@ -72,14 +70,13 @@ const ModalCrearContacto: React.FC<ModalCrearContactoProps> = ({
       email,
       telefonoDirecto: telefonoDirecto || undefined,
       cargo: cargo || undefined,
-      esPrincipal: false, // Opcional, el backend puede decidir la lógica de esto
+      esPrincipal: false,
     };
 
     try {
-      // Llamada al nuevo endpoint del backend
       const response = await apiClient.post<ContactoParaClienteDto>(`/api/clientes/${clienteId}/contactos`, contactoData);
       
-      onContactoCreado(response.data); // Llama al callback con el contacto creado
+      onContactoCreado(response.data); 
       handleModalClose();
     } catch (err: any) {
       const apiError = err.response?.data;

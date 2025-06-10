@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react'; // <-- Añadir useCallback
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import apiClient from '../services/apiClient';
 import { Card, Spinner, Alert, ListGroup, Button, Table, Row, Col, Badge } from 'react-bootstrap';
@@ -25,8 +25,7 @@ const ClienteDetailPage: React.FC = () => {
     const [showCrearContactoModal, setShowCrearContactoModal] = useState(false);
     const [contactoAEditar, setContactoAEditar] = useState<ContactoDto | null>(null);
 
-    // --- 1. CREACIÓN DE LA FUNCIÓN fetchCliente ---
-    // Usamos useCallback para memorizar la función y evitar que se recree en cada render
+    
     const fetchCliente = useCallback(() => {
         if (!clienteId) {
             setError("No se proporcionó un ID de cliente.");
@@ -38,7 +37,7 @@ const ClienteDetailPage: React.FC = () => {
         apiClient.get<ClienteDto>(`/api/clientes/${clienteId}`)
             .then(response => {
                 setCliente(response.data);
-                setError(null); // Limpiar errores previos si la carga es exitosa
+                setError(null); 
             })
             .catch(err => {
                 setError("Error al cargar los detalles del Cliente.");
@@ -47,12 +46,11 @@ const ClienteDetailPage: React.FC = () => {
             .finally(() => {
                 setLoading(false);
             });
-    }, [clienteId]); // La función se recreará solo si el clienteId cambia
+    }, [clienteId]); 
 
-    // --- 2. useEffect AHORA USA LA NUEVA FUNCIÓN ---
     useEffect(() => {
         fetchCliente();
-    }, [fetchCliente]); // La dependencia ahora es la función memorizada
+    }, [fetchCliente]); 
 
     const handleEditContacto = (contacto: ContactoDto) => {
         setContactoAEditar(contacto);
@@ -63,14 +61,14 @@ const ClienteDetailPage: React.FC = () => {
         if (window.confirm('¿Estás seguro de eliminar este contacto?')) {
             try {
                 await apiClient.delete(`/api/clientes/contactos/${contactoId}`);
-                fetchCliente(); // <-- AHORA ESTA LLAMADA FUNCIONA
+                fetchCliente();
             } catch (err: any) {
                 setError(err.response?.data?.message || "Error al eliminar contacto.");
             }
         }
     };
 
-    // El resto de la lógica de renderizado no cambia
+    
     if (loading) return <div className="text-center p-5"><Spinner animation="border" /></div>;
     if (error) return <Alert variant="danger" dismissible onClose={() => setError(null)}>{error}</Alert>;
     if (!cliente) return <Alert variant="warning">No se encontró el Cliente.</Alert>;

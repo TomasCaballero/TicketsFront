@@ -1,4 +1,3 @@
-// src/App.tsx
 import React from 'react';
 import { Routes, Route, Navigate, Outlet, useNavigate } from 'react-router-dom';
 import LoginPage from './pages/LoginPage'; 
@@ -6,7 +5,7 @@ import { useAuth } from './context/AuthContext';
 import TicketsListPage from './pages/TicketsListPage'; 
 import CrearTicketPage from './pages/CrearTicketPage'; 
 import TicketDetailPage from './pages/TicketDetailPage';
-import EditarTicketPage from './pages/EditarTicketPage'; // <-- 1. IMPORTAR LA PÁGINA
+import EditarTicketPage from './pages/EditarTicketPage';
 import Navbar from './components/Navbar'; 
 import GestionUsuariosPage from './pages/admin/GestionUsuariosPage'; 
 import CentrosCostoListPage from './pages/CentrosCostoListPage';
@@ -15,8 +14,6 @@ import ClientesListPage from './pages/ClientesListPage';
 import ClienteDetailPage from './pages/ClienteDetailPage';
 import DashboardPage from './pages/DashboardPage';
 
-// (El resto de las interfaces y componentes MainLayout, ProtectedRoute, DashboardPage, etc., no cambian)
-// ...
 
 interface UsuarioActualParaNavbar {
   nombre?: string;
@@ -89,12 +86,6 @@ const ProtectedRoute: React.FC<{ children?: React.ReactNode; roles?: string[] }>
 };
 
 
-
-const ClientesListPagePlaceholder = () => <div className="card shadow-sm"><div className="card-body p-4"><h1 className="card-title h3">Lista de Clientes</h1><p>Contenido...</p></div></div>;
-const CentrosCostoListPagePlaceholder = () => <div className="card shadow-sm"><div className="card-body p-4"><h1 className="card-title h3">Lista de Centros de Costo</h1><p>Contenido...</p></div></div>;
-const RolesPagePlaceholder = () => <div className="card shadow-sm"><div className="card-body p-4"><h1 className="card-title h3">Gestión de Roles</h1><p>Contenido...</p></div></div>;
-
-
 function App() {
   return (
     <Routes>
@@ -119,14 +110,6 @@ function App() {
                 </ProtectedRoute>
             } 
         />
-        <Route 
-            path="/roles" 
-            element={
-                <ProtectedRoute roles={['Administrador']}>
-                    <RolesPagePlaceholder />
-                </ProtectedRoute>
-            } 
-        /> 
       </Route>
 
       <Route 

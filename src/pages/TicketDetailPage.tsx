@@ -17,8 +17,7 @@ import Badge from 'react-bootstrap/Badge';
 import ListGroup from 'react-bootstrap/ListGroup';
 import Form from 'react-bootstrap/Form';
 import { ArrowLeft, Paperclip, ChatDots, PersonFill, CalendarEvent, ClockHistory, BarChartLine, PlusCircle, Download, Trash3, Eye as EyeIcon, PencilFill } from 'react-bootstrap-icons'; // Renombrado Eye a EyeIcon para evitar conflicto
-import Collapse from 'react-bootstrap/Collapse'; // Para el panel desplegable
-// Para el selector múltiple
+import Collapse from 'react-bootstrap/Collapse';
 
 
 import ModalCrearNota from '../components/ModalCrearNota';
@@ -95,7 +94,6 @@ const TicketDetailPage: React.FC = () => {
     if (showLoader) setLoading(true);
     setError(null);
     try {
-      // Hacemos las peticiones en paralelo para más eficiencia
       const [ticketRes, usuariosRes] = await Promise.all([
         apiClient.get<TicketDto>(`/api/tickets/${ticketId}`),
         apiClient.get<UsuarioSimpleDto[]>('/api/usuarios')
@@ -169,9 +167,8 @@ const TicketDetailPage: React.FC = () => {
     try {
       await apiClient.put(`/api/tickets/${ticketId}`, { participantesIds });
 
-      // Ocultar el panel y refrescar los datos del ticket para ver los cambios
       setIsManagingParticipants(false);
-      await fetchTicketDetails(false); // Refresca sin mostrar el spinner grande
+      await fetchTicketDetails(false); 
 
     } catch (err: any) {
       console.error("Error al actualizar participantes:", err);
@@ -181,7 +178,6 @@ const TicketDetailPage: React.FC = () => {
     }
   };
 
-  // Sincronizar el selector con los participantes actuales cuando se abre el panel
   useEffect(() => {
     if (isManagingParticipants && ticket) {
       const currentParticipants = ticket.participantes.map(p => ({
@@ -192,14 +188,11 @@ const TicketDetailPage: React.FC = () => {
     }
   }, [isManagingParticipants, ticket]);
 
-  // Opciones para el selector, calculadas una sola vez si los usuarios no cambian
   const opcionesUsuarios = useMemo(() => {
-    // Si no tenemos la información necesaria, devolvemos una lista vacía.
     if (!ticket || !todosLosUsuarios.length) {
       return [];
     }
 
-    // 1. Determinar el rol requerido basado en el tipo de ticket.
     let rolRequerido: string | null = null;
     if (ticket.tipoTicket === 'Desarrollo') {
       rolRequerido = 'Desarrollador';
@@ -207,7 +200,6 @@ const TicketDetailPage: React.FC = () => {
       rolRequerido = 'Soporte';
     }
 
-    // Si no hay un rol requerido específico, no filtramos (esto es un respaldo).
     if (!rolRequerido) {
       return todosLosUsuarios.map(u => ({
         value: u.id,
@@ -215,20 +207,16 @@ const TicketDetailPage: React.FC = () => {
       }));
     }
 
-    // 2. Filtrar la lista de todos los usuarios.
     const usuariosFiltrados = todosLosUsuarios.filter(usuario =>
-      // Un usuario es válido si tiene el rol requerido para el ticket,
-      // O si tiene el rol de Administrador (los administradores pueden participar en todo).
+     
       usuario.roles.includes(rolRequerido) || usuario.roles.includes('Administrador')
     );
 
-    // 3. Mapear la lista filtrada al formato que necesita react-select.
     return usuariosFiltrados.map(u => ({
       value: u.id,
       label: u.nombreCompleto || u.username,
     }));
 
-    // 4. Añadimos 'ticket' a las dependencias para que el memo se recalcule si el ticket cambia.
   }, [todosLosUsuarios, ticket]);
 
   if (loading) {
@@ -423,7 +411,6 @@ const TicketDetailPage: React.FC = () => {
         {ticket.notas.length > 0 ? (
           <ListGroup variant="flush">
             {ticket.notas.map(nota => (
-              // --- 4. HACER EL ITEM CLICKEABLE ---
               <ListGroup.Item key={nota.notaID} action onClick={() => handleVerDetallesNota(nota)} style={{ cursor: 'pointer' }} className="p-3">
                 <div className="d-flex w-100 justify-content-between">
                   <small className="text-muted">
@@ -434,7 +421,7 @@ const TicketDetailPage: React.FC = () => {
                     {nota.tiempoDeTrabajo != null && ` (${nota.tiempoDeTrabajo} hs)`}
                   </Badge>
                 </div>
-                <p className="mb-1 mt-2 text-truncate">{nota.contenido}</p> {/* Usar text-truncate para un preview */}
+                <p className="mb-1 mt-2 text-truncate">{nota.contenido}</p> 
                 {nota.adjuntos && nota.adjuntos.length > 0 && (
                   <small className="text-muted"><Paperclip /> {nota.adjuntos.length} adjunto(s)</small>
                 )}
@@ -459,7 +446,6 @@ const TicketDetailPage: React.FC = () => {
               <ListGroup.Item key={adjunto.adjuntoID} className="p-3">
                 <div className="d-flex justify-content-between align-items-center">
                   <div>
-                    {/* CAMBIO: Usar un Button o span con onClick para abrir el modal de previsualización */}
                     <Button
                       variant="link"
                       className="p-0 fw-medium me-2"
@@ -492,7 +478,6 @@ const TicketDetailPage: React.FC = () => {
         )}
       </Card>
 
-      {/* Renderizar Modales */}
       {ticketId && ticket && (
         <>
           <ModalCrearNota
@@ -508,7 +493,6 @@ const TicketDetailPage: React.FC = () => {
             ticketId={ticketId}
             onAdjuntoAgregado={handleNuevoAdjuntoAgregado}
           />
-          {/* NUEVO MODAL DE PREVISUALIZACIÓN */}
           <ModalPrevisualizarAdjunto
             show={showPrevisualizarAdjuntoModal}
             handleClose={handleCerrarModalPrevisualizacion}
@@ -537,7 +521,6 @@ const TicketDetailPage: React.FC = () => {
             handleClose={handleCerrarModalPrevisualizacion}
             adjunto={adjuntoSeleccionado}
           />
-          {/* RENDERIZAR EL NUEVO MODAL */}
           <ModalVerNota
             show={showVerNotaModal}
             handleClose={() => setShowVerNotaModal(false)}

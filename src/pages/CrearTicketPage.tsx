@@ -9,7 +9,6 @@ import { PrioridadTicketEnum, TipoClienteEnum } from '../types/tickets';
 import type { ClienteParaSelectorDto as ClienteParaSelectorDtoBase } from '../types/clientes';
 import { Editor } from '@tinymce/tinymce-react';
 
-// Extend the type locally to include cuit_RUC if missing in the imported type
 interface ClienteParaSelectorDto extends ClienteParaSelectorDtoBase {
   cuit_RUC?: string;
 }
@@ -27,7 +26,7 @@ import InputGroup from 'react-bootstrap/InputGroup';
 import ListGroup from 'react-bootstrap/ListGroup';
 import ModalCrearCliente from '../components/ModalCrearCliente';
 import ModalCrearContacto from '../components/ModalCrearContacto';
-import ModalAnadirAdjunto from '../components/ModalAnadirAdjunto'; // <-- Usar el nuevo modal
+import ModalAnadirAdjunto from '../components/ModalAnadirAdjunto';
 import { Modal } from 'react-bootstrap';
 import { Paperclip, Trash3, PlusCircle } from 'react-bootstrap-icons';
 import Image from 'react-bootstrap/Image';
@@ -52,12 +51,11 @@ interface CentroDeCostoParaSelectorDto {
   nombre: string;
 }
 
-// --- NUEVO TIPO PARA MANEJAR ARCHIVOS LOCALMENTE ---
 interface ArchivoLocal {
-  id: string; // Un ID temporal para el manejo de la lista
+  id: string;
   file: File;
   descripcion: string;
-  previewUrl?: string; // URL para previsualización de imágenes
+  previewUrl?: string; 
 }
 
 const CrearTicketPage: React.FC = () => {
@@ -168,16 +166,13 @@ const CrearTicketPage: React.FC = () => {
   }, [ticketType]);
 
   useEffect(() => {
-    // Tipamos el estado recibido para seguridad
     const defaultData = locationState as { defaultCentroDeCosto?: { centroDeCostoID: string; nombre: string } };
 
     if (defaultData?.defaultCentroDeCosto) {
       const { centroDeCostoID, nombre } = defaultData.defaultCentroDeCosto;
 
-      // Creamos un objeto que coincida con el tipo esperado por el selector
       const cdcSeleccionado = { centroDeCostoID, nombre };
 
-      // Establecemos el estado para pre-seleccionar y bloquear el campo
       setSelectedCentroDeCosto(cdcSeleccionado);
       setSearchTermCentroDeCosto(nombre);
       setIsCentroCostoLocked(true);
@@ -189,19 +184,16 @@ const CrearTicketPage: React.FC = () => {
     , [usuariosParaAsignar]);
 
   const filteredClientes = useMemo(() => {
-    // Caso 1: El usuario está escribiendo algo
     if (searchTermCliente) {
       return clientes.filter(c =>
         c.nombreCliente.toLowerCase().includes(searchTermCliente.toLowerCase()) ||
         (c.cuit_RUC && c.cuit_RUC.includes(searchTermCliente))
       ).slice(0, 10);
     }
-    // Caso 2: El input está vacío pero tiene el foco
     if (isClienteInputFocused) {
-      // Devolvemos los últimos 3 clientes de la lista como sugerencia
       return clientes.slice(-3);
     }
-    // Caso 3: No hay foco ni texto, no mostrar nada
+    
     return [];
   }, [searchTermCliente, clientes, isClienteInputFocused]);
 
@@ -221,12 +213,12 @@ const CrearTicketPage: React.FC = () => {
     setSelectedCliente(cliente);
     setSearchTermCliente(cliente.nombreCliente);
     setContactoId('');
-    setIsClienteInputFocused(false); // Ocultar la lista al seleccionar
+    setIsClienteInputFocused(false); 
   };
   const handleCentroDeCostoSelect = (cdc: CentroDeCostoParaSelectorDto) => {
     setSelectedCentroDeCosto(cdc);
     setSearchTermCentroDeCosto(cdc.nombre);
-    setIsCentroCostoInputFocused(false); // Ocultar la lista al seleccionar
+    setIsCentroCostoInputFocused(false); 
   };
   const handleClienteCreadoEnModal = (nuevoCliente: ClienteParaSelectorDto) => {
     setClientes(prevClientes => [...prevClientes, nuevoCliente].sort((a, b) => a.nombreCliente.localeCompare(b.nombreCliente)));
@@ -243,23 +235,19 @@ const CrearTicketPage: React.FC = () => {
   const handleContactoCreadoEnModal = (nuevoContacto: ContactoParaClienteDto) => {
     if (!selectedCliente) return;
 
-    // Crear el nuevo cliente actualizado con el nuevo contacto
     const clienteActualizado: ClienteParaSelectorDto = {
       ...selectedCliente,
       contactos: [...(selectedCliente.contactos || []), nuevoContacto].sort((a, b) => a.nombre.localeCompare(b.nombre)),
     };
 
-    // Reemplazar el cliente viejo por el actualizado en la lista de clientes
     setClientes(prevClientes =>
       prevClientes.map(c => c.clienteID === clienteActualizado.clienteID ? clienteActualizado : c)
     );
 
-    // Seleccionar el cliente actualizado
     setSelectedCliente(clienteActualizado);
-    // Seleccionar el nuevo contacto en el dropdown
     setContactoId(nuevoContacto.contactoID);
 
-    setShowCrearContactoModal(false); // Cerrar el modal
+    setShowCrearContactoModal(false); 
   };
 
 
@@ -411,7 +399,7 @@ const CrearTicketPage: React.FC = () => {
                 <Form.Group className="mb-4" controlId="descripcion">
                   <Form.Label>Descripción</Form.Label>
                   <Editor
-                    apiKey='4diy8fren78ukba5i30x08jzf50dazp3g1w70stpafjir4n1' // <-- Pega tu API Key aquí
+                    apiKey='4diy8fren78ukba5i30x08jzf50dazp3g1w70stpafjir4n1' 
                     value={descripcion}
                     onEditorChange={(content, editor) => setDescripcion(content)}
                     init={{
@@ -442,13 +430,12 @@ const CrearTicketPage: React.FC = () => {
                       value={searchTermCliente}
                       onChange={(e) => { setSearchTermCliente(e.target.value); setSelectedCliente(null); setContactoId(''); }}
                       onFocus={() => setIsClienteInputFocused(true)}
-                      onBlur={() => setTimeout(() => setIsClienteInputFocused(false), 150)} // Delay para permitir el click
+                      onBlur={() => setTimeout(() => setIsClienteInputFocused(false), 150)} 
                       disabled={isSubmitting || clientes.length === 0}
                     />
                     <Button variant="outline-success" onClick={() => setShowCrearClienteModal(true)}>Nuevo</Button>
                   </InputGroup>
 
-                  {/* --- 4. CONDICIÓN DE RENDERIZADO DEL DESPLEGABLE SIMPLIFICADA --- */}
                   {!selectedCliente && filteredClientes.length > 0 &&
                     <ListGroup className="mt-1 position-absolute" style={{ zIndex: 1000, width: 'calc(100% - 2.5rem)' }}>
                       {filteredClientes.map(c => (
@@ -463,7 +450,6 @@ const CrearTicketPage: React.FC = () => {
                 {selectedCliente && selectedCliente.tipoCliente === TipoClienteEnum.Empresa && (
                   <Form.Group className="mb-3" controlId="contactoId">
                     <Form.Label>Contacto del Cliente {contactosDelClienteSeleccionado.length > 0 ? '*' : ''}</Form.Label>
-                    {/* AÑADIR InputGroup para tener el botón al lado */}
                     <InputGroup>
                       <Form.Select
                         value={contactoId}
@@ -478,7 +464,6 @@ const CrearTicketPage: React.FC = () => {
                           </option>
                         ))}
                       </Form.Select>
-                      {/* Botón para abrir el nuevo modal */}
                       <Button variant="outline-success" onClick={() => setShowCrearContactoModal(true)}>
                         Nuevo Contacto
                       </Button>
@@ -497,7 +482,7 @@ const CrearTicketPage: React.FC = () => {
                       onChange={(e) => { /* ... */ }}
                       onFocus={() => setIsCentroCostoInputFocused(true)}
                       onBlur={() => setTimeout(() => setIsCentroCostoInputFocused(false), 150)}
-                      disabled={isSubmitting || isCentroCostoLocked} // <-- Deshabilitado si está bloqueado
+                      disabled={isSubmitting || isCentroCostoLocked}
                     />
                     <Button variant="outline-success" onClick={() => setShowCrearCentroDeCostoModal(true)} disabled={isCentroCostoLocked}>
                       Nuevo
@@ -605,7 +590,6 @@ const CrearTicketPage: React.FC = () => {
         show={showCrearCentroDeCostoModal}
         handleClose={() => setShowCrearCentroDeCostoModal(false)}
         onSuccess={handleCentroDeCostoCreadoEnModal}
-      // No pasamos la prop `centroDeCostoAEditar`, por lo que el modal funcionará en modo "Crear"
       />
     </>
   );

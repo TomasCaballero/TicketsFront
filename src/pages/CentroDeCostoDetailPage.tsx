@@ -16,8 +16,8 @@ const CentroDeCostoDetailPage: React.FC = () => {
     const [centroDeCosto, setCentroDeCosto] = useState<CentroDeCostoDto | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const navigate = useNavigate(); // <-- Hook para navegar
-    const { tienePermiso } = useAuth(); // <-- Hook para permisos
+    const navigate = useNavigate(); 
+    const { tienePermiso } = useAuth(); 
 
     useEffect(() => {
         if (!centroDeCostoId) return;
@@ -36,7 +36,7 @@ const CentroDeCostoDetailPage: React.FC = () => {
     const handleCrearTicket = () => {
         if (!centroDeCosto) return;
 
-        // Usamos el `state` de la navegación para pasar datos a la siguiente página
+
         navigate('/tickets/nuevo', {
             state: {
                 defaultCentroDeCosto: {

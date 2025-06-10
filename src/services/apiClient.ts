@@ -44,7 +44,6 @@ apiClient.interceptors.response.use(
     if (error.response && error.response.status === 401) {
       console.error('Error 401: No autorizado. Redirigiendo al login...');
       localStorage.removeItem('authToken');
-      // window.location.href = '/login';
     }
     return Promise.reject(error);
   }

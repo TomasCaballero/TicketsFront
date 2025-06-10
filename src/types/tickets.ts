@@ -1,9 +1,5 @@
-// src/types/tickets.ts
-
-// Asegúrate de que src/types/auth.ts exista y exporte UsuarioSimpleDto
 import type { UsuarioSimpleDto } from './auth'; 
 
-// Definición local de DTOs simples para evitar errores de módulo no encontrado.
 export interface ClienteSimpleDto {
   clienteID: string;
   nombre: string;
@@ -15,7 +11,6 @@ export interface CentroDeCostoSimpleDto {
   nombre: string;
 }
 
-// Enums (sin cambios, deberían estar bien)
 export type PrioridadTicketEnum = 0 | 1 | 2 | 3;
 export const PrioridadTicketEnum = {
   BAJA: 0 as 0,
@@ -96,7 +91,6 @@ export interface TicketDto {
   adjuntos: AdjuntoSimpleDto[];
 }
 
-// --- DTOs para Creación de Tickets ---
 export interface CrearTicketBaseDto {
   titulo: string;
   descripcion?: string | null;
@@ -117,7 +111,7 @@ export interface CrearTicketDesarrolloDto extends CrearTicketBaseDto {
   horasEstimadas?: number | null;
 }
 
-// --- DTO para Actualización de Tickets ---
+
 export interface ActualizarTicketDto {
     titulo?: string | null;
     descripcion?: string | null;
@@ -130,22 +124,19 @@ export interface ActualizarTicketDto {
     horasEstimadas?: number | null;
 }
 
-// --- DTOs para Creación de Notas ---
-// (Estos son los que faltaban en el código que me pasaste)
+
 export interface CrearNotaBaseDto {
     contenido: string;
 }
 
 export interface CrearNotaSoporteDto extends CrearNotaBaseDto {
-    tiempoDeTrabajo?: number | null; // Coincide con el DTO del backend
+    tiempoDeTrabajo?: number | null;
 }
 
 export interface CrearNotaDesarrolloDto extends CrearNotaBaseDto {
-    tiempoDeTrabajo: number; // Coincide con el DTO del backend (obligatorio y positivo)
+    tiempoDeTrabajo: number;
 }
 
-// --- DTOs para Actualización de Notas ---
-// (Los añadimos aquí para tener todos los tipos de notas juntos)
 export interface ActualizarNotaBaseDto {
     contenido?: string | null;
 }

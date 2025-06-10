@@ -1,20 +1,20 @@
 // src/components/admin/ModalCrearUsuario.tsx
 import React, { useState, useEffect, type FormEvent } from 'react';
 import apiClient from '../../services/apiClient';
-import type { RolDto } from '../../types/roles'; // Para la lista de roles
-import type { CrearUsuarioPorAdminDto } from '../../types/admin'; // DTO para el backend
-import type { UsuarioAdminDto } from '../../types/admin'; // Para el callback
+import type { RolDto } from '../../types/roles'; 
+import type { CrearUsuarioPorAdminDto } from '../../types/admin'; 
+import type { UsuarioAdminDto } from '../../types/admin'; 
 
 import Modal from 'react-bootstrap/Modal';
 import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
 import Alert from 'react-bootstrap/Alert';
 import Spinner from 'react-bootstrap/Spinner';
-import Select, { type MultiValue } from 'react-select'; // Para selector múltiple de roles
+import Select, { type MultiValue } from 'react-select'; 
 import { Col, Row } from 'react-bootstrap';
 
 interface SelectOption {
-  value: string; // Usaremos el nombre del rol como value
+  value: string;
   label: string;
 }
 
@@ -34,7 +34,7 @@ const ModalCrearUsuario: React.FC<ModalCrearUsuarioProps> = ({
   const [password, setPassword] = useState('');
   const [nombre, setNombre] = useState('');
   const [apellido, setApellido] = useState('');
-  const [estaActivo, setEstaActivo] = useState<boolean>(true); // Por defecto, admin crea usuarios activos
+  const [estaActivo, setEstaActivo] = useState<boolean>(true);
   const [selectedRoles, setSelectedRoles] = useState<MultiValue<SelectOption>>([]);
 
   const [todosLosRoles, setTodosLosRoles] = useState<RolDto[]>([]);
@@ -43,10 +43,8 @@ const ModalCrearUsuario: React.FC<ModalCrearUsuarioProps> = ({
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Cargar roles disponibles cuando el modal se muestra
   useEffect(() => {
     if (show) {
-      // Resetear formulario
       setUsername('');
       setEmail('');
       setPassword('');
@@ -85,21 +83,20 @@ const ModalCrearUsuario: React.FC<ModalCrearUsuarioProps> = ({
     const dto: CrearUsuarioPorAdminDto = {
       username: username.trim(),
       email: email.trim(),
-      password: password, // La validación de complejidad la hace el backend
+      password: password, 
       nombre: nombre.trim(),
       apellido: apellido.trim(),
       estaActivo,
-      roles: selectedRoles.map(option => option.value), // Enviar array de nombres de rol
+      roles: selectedRoles.map(option => option.value), 
     };
 
     try {
       const response = await apiClient.post<UsuarioAdminDto>('/api/admin/usuarios', dto);
-      onUsuarioCreado(response.data); // El backend devuelve el UsuarioAdminDto del nuevo usuario
+      onUsuarioCreado(response.data); 
       handleClose();
     } catch (err: any) {
       if (err.response && err.response.data) {
         const apiError = err.response.data;
-        // ASP.NET Identity errores suelen venir en un array 'errors' o como un objeto con 'title'
         let errorMessage = 'Error al crear el usuario.';
         if (apiError.errors && Array.isArray(apiError.errors)) {
             errorMessage = apiError.errors.map((e: any) => e.description || e.code || JSON.stringify(e)).join(', ');

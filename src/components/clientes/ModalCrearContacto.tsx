@@ -6,7 +6,7 @@ import type { CrearContactoParaClienteDto } from '../../types/clientes';
 interface ModalProps {
   show: boolean;
   handleClose: () => void;
-  onContactoCreado: () => void; // Cambiado para no necesitar el objeto de vuelta
+  onContactoCreado: () => void; 
   clienteId: string;
   clienteNombre: string;
 }

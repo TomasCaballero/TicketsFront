@@ -1,7 +1,7 @@
 import React, { useState, useEffect, type FormEvent } from 'react';
 import apiClient from '../../services/apiClient';
-import type { UsuarioAdminDto } from '../../types/admin'; // Para la prop del usuario
-import type { RolDto } from '../../types/roles';       // Para la lista de todos los roles
+import type { UsuarioAdminDto } from '../../types/admin'; 
+import type { RolDto } from '../../types/roles';    
 
 import Modal from 'react-bootstrap/Modal';
 import Form from 'react-bootstrap/Form';
@@ -13,8 +13,8 @@ import ListGroup from 'react-bootstrap/ListGroup';
 interface ModalGestionarRolesUsuarioProps {
   show: boolean;
   handleClose: () => void;
-  usuario: UsuarioAdminDto | null; // Usuario seleccionado para editar sus roles
-  onRolesActualizados: (usuarioId: string) => void; // Callback para notificar éxito
+  usuario: UsuarioAdminDto | null; 
+  onRolesActualizados: (usuarioId: string) => void;
 }
 
 const ModalGestionarRolesUsuario: React.FC<ModalGestionarRolesUsuarioProps> = ({
@@ -38,15 +38,15 @@ const ModalGestionarRolesUsuario: React.FC<ModalGestionarRolesUsuarioProps> = ({
         setError(null);
         try {
           const [todosRolesRes, rolesUsuarioRes] = await Promise.all([
-            apiClient.get<RolDto[]>('/api/roles'), // Obtener todos los roles disponibles
-            apiClient.get<string[]>(`/api/roles/usuario/${usuario.id}/roles`), // Obtener roles actuales del usuario
+            apiClient.get<RolDto[]>('/api/roles'), 
+            apiClient.get<string[]>(`/api/roles/usuario/${usuario.id}/roles`), 
           ]);
           
           setTodosLosRoles(todosRolesRes.data.sort((a,b) => a.nombre.localeCompare(b.nombre)));
           
           const asignadosSet = new Set(rolesUsuarioRes.data);
-          setRolesAsignadosOriginalmente(new Set(asignadosSet)); // Guardar el estado original
-          setRolesSeleccionados(new Set(asignadosSet)); // Inicializar selección con los actuales
+          setRolesAsignadosOriginalmente(new Set(asignadosSet));
+          setRolesSeleccionados(new Set(asignadosSet)); 
 
         } catch (err: any) {
           console.error('Error cargando datos de roles para el usuario:', err);
@@ -91,7 +91,6 @@ const ModalGestionarRolesUsuario: React.FC<ModalGestionarRolesUsuarioProps> = ({
     );
 
     try {
-      // Enviar solicitudes para agregar roles
       for (const nombreRol of rolesParaAgregar) {
         await apiClient.post('/api/roles/asignar-rol', {
           usuarioId: usuario.id,
@@ -99,15 +98,14 @@ const ModalGestionarRolesUsuario: React.FC<ModalGestionarRolesUsuarioProps> = ({
         });
       }
 
-      // Enviar solicitudes para quitar roles
       for (const nombreRol of rolesParaQuitar) {
-        await apiClient.post('/api/roles/remover-rol', { // El endpoint de remover también es POST
+        await apiClient.post('/api/roles/remover-rol', {
           usuarioId: usuario.id,
           nombreRol: nombreRol,
         });
       }
 
-      onRolesActualizados(usuario.id); // Notificar al padre para que refresque la lista de usuarios
+      onRolesActualizados(usuario.id);
       handleClose();
     } catch (err: any) {
       console.error('Error actualizando roles del usuario:', err);
@@ -138,8 +136,8 @@ const ModalGestionarRolesUsuario: React.FC<ModalGestionarRolesUsuarioProps> = ({
               {todosLosRoles.map((rol) => (
                 <ListGroup.Item key={rol.id} className="px-3 py-2">
                   <Form.Check
-                    type="checkbox" // Usar checkbox en lugar de switch para una lista
-                    id={`rol-${rol.id}-${usuario?.id}`} // ID único
+                    type="checkbox" 
+                    id={`rol-${rol.id}-${usuario?.id}`} 
                     label={rol.nombre}
                     checked={rolesSeleccionados.has(rol.nombre)}
                     onChange={() => handleRolChange(rol.nombre)}

@@ -56,12 +56,11 @@ const ModalCrearEditarCliente: React.FC<ModalProps> = ({ show, handleClose, onSu
                     nombreCliente,
                     cuit_RUC: cuitRuc,
                     emailPrincipal,
-                    telefonoPrincipal, // <-- Añadido
-                    direccionFiscal   // <-- Añadido
+                    telefonoPrincipal, 
+                    direccionFiscal  
                 };
                 await apiClient.put(`/api/clientes/${clienteAEditar.clienteID}`, payload);
             } else {
-                // La creación de contactos se maneja en un flujo separado o en la página de detalles
                 const payload: CrearClienteDto = { nombreCliente, tipoCliente, cuit_RUC: cuitRuc, emailPrincipal };
                 await apiClient.post('/api/clientes', payload);
             }

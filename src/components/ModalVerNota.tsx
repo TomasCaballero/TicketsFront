@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import type { NotaSimpleDto, AdjuntoSimpleDto } from '../types/tickets';
-import apiClient from '../services/apiClient'; // Importamos apiClient
+import apiClient from '../services/apiClient'; 
 
 import Modal from 'react-bootstrap/Modal';
 import Button from 'react-bootstrap/Button';
 import Badge from 'react-bootstrap/Badge';
 import ListGroup from 'react-bootstrap/ListGroup';
 import Alert from 'react-bootstrap/Alert';
-import Spinner from 'react-bootstrap/Spinner'; // Necesitaremos un spinner
+import Spinner from 'react-bootstrap/Spinner'; 
 import { ChatRightText, Clock, Person, Paperclip, Eye as EyeIcon, Download, XCircle } from 'react-bootstrap-icons';
 
 interface ModalVerNotaProps {
@@ -37,13 +37,11 @@ const ModalVerNota: React.FC<ModalVerNotaProps> = ({
   handleClose,
   nota,
 }) => {
-  // Estados para la previsualización
   const [previewData, setPreviewData] = useState<string | null>(null);
   const [previewType, setPreviewType] = useState<string | null>(null);
   const [isLoadingPreview, setIsLoadingPreview] = useState<boolean>(false);
   const [previewError, setPreviewError] = useState<string | null>(null);
 
-  // Limpiar la previsualización cuando el modal se cierra o cambia la nota
   useEffect(() => {
     if (!show) {
       setPreviewData(null);
@@ -52,25 +50,20 @@ const ModalVerNota: React.FC<ModalVerNotaProps> = ({
     }
   }, [show]);
 
-  // Función para manejar la previsualización
   const handlePreview = async (adjunto: AdjuntoSimpleDto) => {
-    // Reseteamos el estado antes de empezar
     setPreviewData(null);
     setPreviewError(null);
     setIsLoadingPreview(true);
     setPreviewType(adjunto.tipoArchivo);
 
     try {
-      // 1. Usamos apiClient para hacer la petición (esto incluye el token)
       const response = await apiClient.get(`/api/adjuntos/${adjunto.adjuntoID}`, {
-        responseType: 'blob', // Pedimos la respuesta como un objeto binario (blob)
+        responseType: 'blob',
       });
 
-      // 2. Creamos una URL local y temporal para el blob
       const blob = new Blob([response.data], { type: adjunto.tipoArchivo });
       const objectUrl = URL.createObjectURL(blob);
 
-      // 3. Guardamos la URL temporal en el estado para que se renderice
       setPreviewData(objectUrl);
 
     } catch (err) {
@@ -82,7 +75,6 @@ const ModalVerNota: React.FC<ModalVerNotaProps> = ({
   };
 
   const handleClosePreview = () => {
-    // Al cerrar la previsualización, revocamos la URL para liberar memoria
     if (previewData) {
       URL.revokeObjectURL(previewData);
     }
@@ -91,7 +83,6 @@ const ModalVerNota: React.FC<ModalVerNotaProps> = ({
     setPreviewError(null);
   };
 
-  // Envolvemos el handleClose original para asegurarnos de limpiar todo
   const handleModalClose = () => {
     handleClosePreview();
     handleClose();
@@ -125,7 +116,6 @@ const ModalVerNota: React.FC<ModalVerNotaProps> = ({
         </Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        {/* --- ÁREA DE PREVISUALIZACIÓN MEJORADA --- */}
         {previewType && (
             <div className="mb-4 p-3 border rounded bg-light">
                  <div className="d-flex justify-content-between align-items-center mb-2">
@@ -150,7 +140,6 @@ const ModalVerNota: React.FC<ModalVerNotaProps> = ({
                 ) : null}
             </div>
         )}
-        {/* --- FIN ÁREA DE PREVISUALIZACIÓN --- */}
 
         <div className="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom">
             <div>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, type FormEvent } from 'react';
 import apiClient from '../../services/apiClient';
-import type { RolDto } from '../../types/roles'; // Para la prop del rol
+import type { RolDto } from '../../types/roles';
 import Form from 'react-bootstrap/Form';
 import Modal from 'react-bootstrap/Modal';
 import Button from 'react-bootstrap/Button';
@@ -11,8 +11,8 @@ import ListGroup from 'react-bootstrap/ListGroup';
 interface ModalEditarPermisosRolProps {
   show: boolean;
   handleClose: () => void;
-  rol: RolDto | null; // Rol seleccionado para editar sus permisos
-  onPermisosActualizados: (rolNombre: string) => void; // Callback para notificar éxito
+  rol: RolDto | null;
+  onPermisosActualizados: (rolNombre: string) => void; 
 }
 
 const ModalEditarPermisosRol: React.FC<ModalEditarPermisosRolProps> = ({
@@ -32,8 +32,8 @@ const ModalEditarPermisosRol: React.FC<ModalEditarPermisosRolProps> = ({
       const fetchData = async () => {
         setIsLoadingData(true);
         setError(null);
-        setPermisosAsignados(new Set()); // Limpiar permisos previos al cargar
-        setTodosLosPermisos([]); // Limpiar lista de permisos disponibles
+        setPermisosAsignados(new Set());
+        setTodosLosPermisos([]); 
         try {
           const [permisosDisponiblesRes, permisosRolRes] = await Promise.all([
             apiClient.get<string[]>('/api/roles/permisos-disponibles'),
@@ -50,7 +50,6 @@ const ModalEditarPermisosRol: React.FC<ModalEditarPermisosRolProps> = ({
       };
       fetchData();
     } else {
-      // Resetear cuando el modal se cierra o no hay rol
       setTodosLosPermisos([]);
       setPermisosAsignados(new Set());
       setError(null);
@@ -79,7 +78,7 @@ const ModalEditarPermisosRol: React.FC<ModalEditarPermisosRolProps> = ({
       await apiClient.put(`/api/roles/${rol.nombre}/permisos`, {
         permisos: Array.from(permisosAsignados),
       });
-      onPermisosActualizados(rol.nombre); // Notificar al padre
+      onPermisosActualizados(rol.nombre); 
       handleClose();
     } catch (err: any) {
       console.error('Error actualizando permisos del rol:', err);
@@ -109,11 +108,10 @@ const ModalEditarPermisosRol: React.FC<ModalEditarPermisosRolProps> = ({
             <ListGroup style={{ maxHeight: '60vh', overflowY: 'auto' }} className="border rounded">
               {todosLosPermisos.map((permiso) => (
                 <ListGroup.Item key={permiso} className="px-3 py-2 d-flex justify-content-between align-items-center">
-                  <span style={{ wordBreak: 'break-all' }}>{permiso.replace(/^Permisos\./, '')}</span> {/* Opcional: quitar prefijo "Permisos." */}
+                  <span style={{ wordBreak: 'break-all' }}>{permiso.replace(/^Permisos\./, '')}</span> 
                   <Form.Check
                     type="switch"
                     id={`permiso-${permiso.replace(/\./g, '-')}`} 
-                    // label={permiso} // El label ya está al lado
                     checked={permisosAsignados.has(permiso)}
                     onChange={() => handlePermisoChange(permiso)}
                     disabled={isSubmitting}

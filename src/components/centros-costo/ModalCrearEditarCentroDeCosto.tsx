@@ -10,7 +10,6 @@ import { Editor } from '@tinymce/tinymce-react';
 interface ModalProps {
   show: boolean;
   handleClose: () => void;
-  // Modificamos onSuccess para que pueda devolver el nuevo objeto, útil para otras páginas
   onSuccess: (nuevoCentroDeCosto?: CentroDeCostoDto) => void;
   centroDeCostoAEditar?: CentroDeCostoDto | null;
 }
@@ -30,7 +29,6 @@ const ModalCrearEditarCentroDeCosto: React.FC<ModalProps> = ({ show, handleClose
 
   const opcionesUsuarios = useMemo(() => usuarios.map(u => ({ value: u.id, label: u.nombreCompleto || u.username })), [usuarios]);
 
-  // --- EFECTO 1: Cargar la lista de usuarios solo cuando el modal se abre ---
   useEffect(() => {
     if (show) {
       setError(null);
@@ -42,26 +40,21 @@ const ModalCrearEditarCentroDeCosto: React.FC<ModalProps> = ({ show, handleClose
           setError("No se pudieron cargar los usuarios para los selectores.");
         });
     }
-  }, [show]); // Se ejecuta solo cuando `show` cambia
+  }, [show]); 
 
-  // --- EFECTO 2: Rellenar el formulario cuando el modal se abre y los datos están listos ---
   useEffect(() => {
-    // Solo rellenar si el modal está visible
     if (show) {
       if (isEditMode && centroDeCostoAEditar) {
-        // --- MODO EDICIÓN ---
         setNombre(centroDeCostoAEditar.nombre);
         setDescripcion(centroDeCostoAEditar.descripcion || '');
         setTipo(centroDeCostoAEditar.tipo);
         setResponsableId(centroDeCostoAEditar.usuarioResponsable?.id || null);
 
-        // Lógica para inicializar participantes solo cuando la lista de usuarios ya cargó
         if (opcionesUsuarios.length > 0) {
           const idsParticipantesActuales = new Set(centroDeCostoAEditar.participantes.map(p => p.id));
           setParticipantes(opcionesUsuarios.filter(opt => idsParticipantesActuales.has(opt.value)));
         }
       } else {
-        // --- MODO CREACIÓN ---
         setNombre('');
         setDescripcion('');
         setTipo(TipoCentroCosto.PROYECTO);
@@ -69,7 +62,7 @@ const ModalCrearEditarCentroDeCosto: React.FC<ModalProps> = ({ show, handleClose
         setParticipantes([]);
       }
     }
-  }, [show, isEditMode, centroDeCostoAEditar, usuarios, opcionesUsuarios]); // Depende de `usuarios` para reaccionar cuando carguen
+  }, [show, isEditMode, centroDeCostoAEditar, usuarios, opcionesUsuarios]); 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,7 +80,7 @@ const ModalCrearEditarCentroDeCosto: React.FC<ModalProps> = ({ show, handleClose
       } else {
         const payload: CrearCentroDeCostoDto = { nombre, descripcion, tipo, usuarioResponsableId: responsableId, participantesIds };
         const response = await apiClient.post<CentroDeCostoDto>('/api/centrosdecosto', payload);
-        onSuccess(response.data); // Devolvemos el nuevo centro de costo
+        onSuccess(response.data); 
       }
       handleClose();
     } catch (err: any) {
@@ -112,7 +105,7 @@ const ModalCrearEditarCentroDeCosto: React.FC<ModalProps> = ({ show, handleClose
           <Form.Group className="mb-4" controlId="descripcion">
             <Form.Label>Descripción</Form.Label>
             <Editor
-              apiKey="4diy8fren78ukba5i30x08jzf50dazp3g1w70stpafjir4n1" // <-- Pega tu API Key aquí
+              apiKey="4diy8fren78ukba5i30x08jzf50dazp3g1w70stpafjir4n1"
               value={descripcion}
               onEditorChange={(content, editor) => setDescripcion(content)}
               init={{

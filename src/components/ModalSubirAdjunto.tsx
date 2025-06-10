@@ -9,7 +9,7 @@ import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
 import Alert from 'react-bootstrap/Alert';
 import Spinner from 'react-bootstrap/Spinner';
-import Image from 'react-bootstrap/Image'; // Para la previsualización
+import Image from 'react-bootstrap/Image'; 
 import { Col, Row } from 'react-bootstrap';
 
 interface ModalSubirAdjuntoProps {
@@ -30,7 +30,7 @@ const ModalSubirAdjunto: React.FC<ModalSubirAdjuntoProps> = ({
   const { usuarioActual } = useAuth();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [descripcion, setDescripcion] = useState<string>('');
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null); // <-- NUEVO ESTADO PARA PREVISUALIZACIÓN
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,19 +38,18 @@ const ModalSubirAdjunto: React.FC<ModalSubirAdjuntoProps> = ({
     if (show) {
       setSelectedFile(null);
       setDescripcion(''); 
-      setPreviewUrl(null); // <-- RESETEAR PREVISUALIZACIÓN
+      setPreviewUrl(null); 
       setError(null);
       setIsSubmitting(false);
     }
   }, [show]);
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setError(null); // Limpiar errores al cambiar archivo
+    setError(null); 
     if (event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
       setSelectedFile(file);
 
-      // Generar previsualización si es una imagen
       if (file.type.startsWith('image/')) {
         const reader = new FileReader();
         reader.onloadend = () => {
@@ -58,7 +57,7 @@ const ModalSubirAdjunto: React.FC<ModalSubirAdjuntoProps> = ({
         };
         reader.readAsDataURL(file);
       } else {
-        setPreviewUrl(null); // No es una imagen, limpiar previsualización
+        setPreviewUrl(null);
       }
     } else {
       setSelectedFile(null);
@@ -72,7 +71,6 @@ const ModalSubirAdjunto: React.FC<ModalSubirAdjuntoProps> = ({
       setError('Por favor, selecciona un archivo para subir.');
       return;
     }
-    // ... (resto de validaciones como antes) ...
     if (!usuarioActual) {
       setError("No se pudo identificar al usuario. Por favor, inicie sesión de nuevo.");
       setIsSubmitting(false);
@@ -131,7 +129,7 @@ const ModalSubirAdjunto: React.FC<ModalSubirAdjuntoProps> = ({
   };
 
   return (
-    <Modal show={show} onHide={handleClose} backdrop="static" keyboard={false} centered size="lg"> {/* Modal más grande para previsualización */}
+    <Modal show={show} onHide={handleClose} backdrop="static" keyboard={false} centered size="lg"> 
       <Modal.Header closeButton>
         <Modal.Title>
             Subir Nuevo Adjunto {ticketId && !notaId ? `al Ticket` : (notaId ? `a la Nota` : '')}
@@ -141,7 +139,7 @@ const ModalSubirAdjunto: React.FC<ModalSubirAdjuntoProps> = ({
         {error && <Alert variant="danger" onClose={() => setError(null)} dismissible>{error}</Alert>}
         <Form onSubmit={handleSubmit}>
           <Row>
-            <Col md={previewUrl ? 7 : 12}> {/* Ajustar columnas si hay previsualización */}
+            <Col md={previewUrl ? 7 : 12}>
               <Form.Group controlId="formFile" className="mb-3">
                 <Form.Label>Seleccionar archivo *</Form.Label>
                 <Form.Control 
@@ -149,7 +147,7 @@ const ModalSubirAdjunto: React.FC<ModalSubirAdjuntoProps> = ({
                   onChange={handleFileChange} 
                   disabled={isSubmitting}
                   required 
-                  accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt" // Tipos de archivo aceptados
+                  accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt" 
                 />
                 {selectedFile && <Form.Text className="text-muted mt-1 d-block">Archivo seleccionado: {selectedFile.name} ({(selectedFile.size / 1024).toFixed(2)} KB)</Form.Text>}
               </Form.Group>
@@ -158,7 +156,7 @@ const ModalSubirAdjunto: React.FC<ModalSubirAdjuntoProps> = ({
                 <Form.Label>Descripción (Opcional)</Form.Label>
                 <Form.Control
                   as="textarea"
-                  rows={previewUrl ? 2 : 4} // Menos filas si hay previsualización
+                  rows={previewUrl ? 2 : 4}
                   placeholder="Añade una breve descripción del archivo..."
                   value={descripcion}
                   onChange={(e) => setDescripcion(e.target.value)}

@@ -2,18 +2,16 @@
 import React, { useState, useEffect, type FormEvent } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import apiClient from '../services/apiClient';
-import { useAuth } from '../context/AuthContext';
 import { Editor } from '@tinymce/tinymce-react';
 import type {
-  TicketDto, // Para poblar el formulario
-  ActualizarTicketDto, // Para enviar la actualización
+  TicketDto,
+  ActualizarTicketDto, 
   ClienteSimpleDto,
   CentroDeCostoSimpleDto,
 } from '../types/tickets';
-import { PrioridadTicketEnum, EstadoTicketEnum } from '../types/tickets'; // Para el select de prioridad y estado
+import { PrioridadTicketEnum, EstadoTicketEnum } from '../types/tickets'; 
 import type { UsuarioSimpleDto } from '../types/auth';
 
-import { Permisos } from '../constants/permisos';
 
 import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
@@ -23,9 +21,9 @@ import Col from 'react-bootstrap/Col';
 import Card from 'react-bootstrap/Card';
 import Alert from 'react-bootstrap/Alert';
 import Spinner from 'react-bootstrap/Spinner';
-import { type MultiValue } from 'react-select'; // Para selectores
+import { type MultiValue } from 'react-select'; 
 
-type TicketType = 'Soporte' | 'Desarrollo'; // El tipo de ticket no se puede cambiar
+type TicketType = 'Soporte' | 'Desarrollo'; 
 
 interface SelectOption {
   value: string;
@@ -35,39 +33,32 @@ interface SelectOption {
 const EditarTicketPage: React.FC = () => {
   const { ticketId } = useParams<{ ticketId: string }>();
   const navigate = useNavigate();
-  const { usuarioActual } = useAuth();
-  const {tienePermiso} = useAuth();
 
-  // Estado para los datos originales del ticket
+
   const [ticketOriginal, setTicketOriginal] = useState<TicketDto | null>(null);
 
-  // Estados para los campos del formulario (inicializados vacíos o con valores por defecto)
   const [titulo, setTitulo] = useState('');
   const [descripcion, setDescripcion] = useState('');
   const [prioridad, setPrioridad] = useState<PrioridadTicketEnum | undefined>(undefined);
   const [estado, setEstado] = useState<EstadoTicketEnum | undefined>(undefined);
-  // Cliente y UsuarioCreador no se editan, pero se muestran
-  const [clienteId, setClienteId] = useState(''); // Solo para mostrar, no se edita
+  const [clienteId, setClienteId] = useState(''); 
   const [centroDeCostoId, setCentroDeCostoId] = useState<string | undefined>('');
   const [usuarioResponsableId, setUsuarioResponsableId] = useState<string | undefined>('');
   const [selectedParticipantes, setSelectedParticipantes] = useState<MultiValue<SelectOption>>([]);
-  const [ticketType, setTicketType] = useState<TicketType | null>(null); // Se determina al cargar el ticket
+  const [ticketType, setTicketType] = useState<TicketType | null>(null); 
 
-  // Estados específicos para TicketDesarrollo
   const [fechaInicioPlanificada, setFechaInicioPlanificada] = useState('');
   const [fechaFinPlanificada, setFechaFinPlanificada] = useState('');
   const [horasEstimadas, setHorasEstimadas] = useState<string>('');
 
-  // Estados para cargar datos de los selects
-  const [clientes, setClientes] = useState<ClienteSimpleDto[]>([]); // Solo para mostrar el nombre del cliente del ticket
+  const [clientes, setClientes] = useState<ClienteSimpleDto[]>([]);
   const [centrosDeCosto, setCentrosDeCosto] = useState<CentroDeCostoSimpleDto[]>([]);
   const [usuarios, setUsuarios] = useState<UsuarioSimpleDto[]>([]);
 
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [isLoadingData, setIsLoadingData] = useState<boolean>(true); // Para la carga inicial del ticket y selects
+  const [isLoadingData, setIsLoadingData] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Cargar datos del ticket y datos para selects
   useEffect(() => {
     if (!ticketId) {
       setError("ID de Ticket no proporcionado.");
@@ -79,10 +70,9 @@ const EditarTicketPage: React.FC = () => {
       setIsLoadingData(true);
       setError(null);
       try {
-        // Cargar ticket existente y datos para selects en paralelo
         const [ticketRes, clientesRes, centrosRes, usuariosRes] = await Promise.all([
           apiClient.get<TicketDto>(`/api/tickets/${ticketId}`),
-          apiClient.get<ClienteSimpleDto[]>('/api/clientes'), // Aunque no se edita, se podría necesitar para mostrar
+          apiClient.get<ClienteSimpleDto[]>('/api/clientes'),
           apiClient.get<CentroDeCostoSimpleDto[]>('/api/centrosdecosto'),
           apiClient.get<UsuarioSimpleDto[]>('/api/usuarios')
         ]);
@@ -93,7 +83,7 @@ const EditarTicketPage: React.FC = () => {
         setDescripcion(ticketData.descripcion || '');
         setPrioridad(ticketData.prioridad);
         setEstado(ticketData.estado);
-        setClienteId(ticketData.cliente?.clienteID || ''); // Para mostrar
+        setClienteId(ticketData.cliente?.clienteID || ''); 
         setCentroDeCostoId(ticketData.centroDeCosto?.centroDeCostoID || '');
         setUsuarioResponsableId(ticketData.usuarioResponsable?.id || '');
 
@@ -138,10 +128,9 @@ const EditarTicketPage: React.FC = () => {
       descripcion: descripcion !== ticketOriginal.descripcion ? descripcion : undefined,
       prioridad: prioridad !== ticketOriginal.prioridad ? Number(prioridad) as PrioridadTicketEnum : undefined,
       estado: estado !== ticketOriginal.estado ? Number(estado) as EstadoTicketEnum : undefined,
-      centroDeCostoID: centroDeCostoId !== (ticketOriginal.centroDeCosto?.centroDeCostoID || '') ? (centroDeCostoId || null) : undefined, // Enviar null para borrar
-      usuarioResponsableID: usuarioResponsableId !== (ticketOriginal.usuarioResponsable?.id || '') ? (usuarioResponsableId || null) : undefined, // Enviar null para borrar
-      // Los participantes se manejarían con un endpoint/lógica separada si se quiere actualizar la lista completa.
-      // Por ahora, el DTO de actualización no incluye participantes.
+      centroDeCostoID: centroDeCostoId !== (ticketOriginal.centroDeCosto?.centroDeCostoID || '') ? (centroDeCostoId || null) : undefined, 
+      usuarioResponsableID: usuarioResponsableId !== (ticketOriginal.usuarioResponsable?.id || '') ? (usuarioResponsableId || null) : undefined, 
+      
     };
 
     if (ticketOriginal.tipoTicket === 'Desarrollo') {
@@ -156,7 +145,6 @@ const EditarTicketPage: React.FC = () => {
         : undefined;
     }
 
-    // Filtrar propiedades undefined para no enviarlas si no cambiaron
     const payload = Object.fromEntries(Object.entries(datosActualizados).filter(([_, v]) => v !== undefined));
 
     if (Object.keys(payload).length === 0) {
@@ -167,8 +155,7 @@ const EditarTicketPage: React.FC = () => {
 
     try {
       await apiClient.put(`/api/tickets/${ticketId}`, payload);
-      // Idealmente, mostrar un toast de éxito
-      navigate(`/tickets/${ticketId}`); // Redirigir al detalle del ticket
+      navigate(`/tickets/${ticketId}`);
     } catch (err: any) {
       if (err.response && err.response.data) {
         const apiError = err.response.data;
@@ -194,7 +181,7 @@ const EditarTicketPage: React.FC = () => {
     );
   }
 
-  if (error && !ticketOriginal) { // Si hay error y no se cargó el ticket, mostrar error principal
+  if (error && !ticketOriginal) { 
     return (
       <Container className="mt-4">
         <Alert variant="danger" onClose={() => setError(null)} dismissible>{error}</Alert>
@@ -203,7 +190,7 @@ const EditarTicketPage: React.FC = () => {
     );
   }
 
-  if (!ticketOriginal) { // Si no hay error pero tampoco ticket, es un estado inesperado
+  if (!ticketOriginal) { 
     return <Container className="mt-4"><Alert variant="warning">No se encontró el ticket para editar.</Alert></Container>;
   }
 
@@ -250,7 +237,7 @@ const EditarTicketPage: React.FC = () => {
                 <Form.Group className="mb-4" controlId="descripcion">
                   <Form.Label>Descripción</Form.Label>
                   <Editor
-                    apiKey="4diy8fren78ukba5i30x08jzf50dazp3g1w70stpafjir4n1" // <-- Pega tu API Key aquí
+                    apiKey="4diy8fren78ukba5i30x08jzf50dazp3g1w70stpafjir4n1" 
                     value={descripcion}
                     onEditorChange={(content, editor) => setDescripcion(content)}
                     init={{
@@ -341,20 +328,7 @@ const EditarTicketPage: React.FC = () => {
                   </Col>
                 </Row>
 
-                {/* La gestión de participantes es más compleja y podría requerir un componente/modal separado
-                    o una lógica de comparación más elaborada si se edita aquí.
-                    Por ahora, no permitimos editar participantes directamente en este formulario.
-                <Form.Group className="mb-3" controlId="participantesIds">
-                    <Form.Label>Participantes</Form.Label>
-                    <Select
-                        isMulti
-                        options={usuarioOptions}
-                        value={selectedParticipantes}
-                        onChange={(selected) => setSelectedParticipantes(selected as MultiValue<SelectOption>)}
-                        isDisabled={isSubmitting}
-                    />
-                </Form.Group>
-                */}
+               
 
 
                 {ticketType === 'Desarrollo' && (

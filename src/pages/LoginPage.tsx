@@ -1,11 +1,10 @@
 // src/pages/LoginPage.tsx (o donde prefieras ubicar tus páginas)
 import React, { useState } from 'react';
 import type { FormEvent } from 'react';
-import { useAuth } from '../context/AuthContext'; // Ajusta la ruta si es necesario
-import { useNavigate } from 'react-router-dom'; // Para la redirección después del login
-import type { LoginDto } from '../types/auth'; // Ajusta la ruta si es necesario
+import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom'; 
+import type { LoginDto } from '../types/auth'; 
 
-// Importar componentes de React-Bootstrap
 import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
 import Alert from 'react-bootstrap/Alert';
@@ -21,7 +20,7 @@ const LoginPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   
   const { login } = useAuth();
-  const navigate = useNavigate(); // Hook para la navegación programática
+  const navigate = useNavigate(); 
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -32,7 +31,7 @@ const LoginPage: React.FC = () => {
 
     try {
       await login(loginData);
-      navigate('/dashboard'); // Redirige a una página de dashboard
+      navigate('/dashboard'); 
     } catch (err: any) {
       if (err.response && err.response.data) {
         const errorMessage = typeof err.response.data === 'string' 
@@ -55,8 +54,7 @@ const LoginPage: React.FC = () => {
           <Card className="shadow-lg">
             <Card.Body className="p-4 p-md-5">
               <div className="text-center mb-4">
-                {/* Puedes poner tu logo aquí */}
-                {/* <img className="mx-auto h-12 w-auto" src="/path-to-your-logo.png" alt="Logo" /> */}
+
                 <h2 className="mt-3 h3 font-weight-bold text-dark">
                   Bienvenido de Nuevo
                 </h2>
@@ -123,7 +121,7 @@ const LoginPage: React.FC = () => {
               </Form>
               <p className="mt-4 text-center text-sm text-muted">
                 ¿No tienes una cuenta?{' '}
-                <a href="/register" className="font-weight-medium text-primary"> {/* Usa Link de react-router-dom si /register es una ruta interna */}
+                <a href="/register" className="font-weight-medium text-primary">
                   Regístrate
                 </a>
               </p>

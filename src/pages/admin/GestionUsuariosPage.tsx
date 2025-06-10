@@ -10,7 +10,6 @@ import ModalGestionarRolesUsuario from '../../components/admin/ModalGestionarRol
 import ModalCrearUsuario from '../../components/admin/ModalCrearUsuario';
 
 const GestionUsuariosPage: React.FC = () => {
-  // Estados existentes (sin cambios)
   const [usuarios, setUsuarios] = useState<UsuarioAdminDto[]>([]);
   const [roles, setRoles] = useState<RolDto[]>([]);
   const [loadingUsuarios, setLoadingUsuarios] = useState<boolean>(true);
@@ -18,13 +17,11 @@ const GestionUsuariosPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
 
-  // --- 1. NUEVOS ESTADOS PARA LOS FILTROS ---
   const [searchUsuario, setSearchUsuario] = useState('');
   const [filterRol, setFilterRol] = useState('');
   const [filterActivo, setFilterActivo] = useState('');
   const [searchRol, setSearchRol] = useState('');
 
-  // Estados para modales (sin cambios)
   const [showCrearRolModal, setShowCrearRolModal] = useState<boolean>(false);
   const [showEditarPermisosModal, setShowEditarPermisosModal] = useState<boolean>(false);
   const [rolParaEditarPermisos, setRolParaEditarPermisos] = useState<RolDto | null>(null);
@@ -33,7 +30,6 @@ const GestionUsuariosPage: React.FC = () => {
   const [showCrearUsuarioModal, setShowCrearUsuarioModal] = useState<boolean>(false);
 
 
-  // --- LÓGICA DE CARGA DE DATOS (tu código original, que es correcto) ---
   const fetchUsuarios = async () => {
     setLoadingUsuarios(true);
     try {
@@ -65,7 +61,6 @@ const GestionUsuariosPage: React.FC = () => {
     fetchRoles();
   }, []);
 
-  // --- 2. LÓGICA DE FILTRADO (useMemo) ---
   const filteredUsers = useMemo(() => {
     const searchTermLower = searchUsuario.toLowerCase();
     return usuarios
@@ -171,14 +166,12 @@ const GestionUsuariosPage: React.FC = () => {
     fetchUsuarios();
   };
 
-  // Callback cuando un usuario es creado desde el modal
   const handleUsuarioCreado = (nuevoUsuario: UsuarioAdminDto) => {
     setUsuarios(prevUsuarios => [...prevUsuarios, nuevoUsuario].sort((a, b) => (a.apellido + a.nombre).localeCompare(b.apellido + b.nombre)));
     setActionMessage(`Usuario "${nuevoUsuario.userName}" creado exitosamente.`);
     setError(null);
   };
 
-  // --- Condición de carga original, que es la correcta ---
   if (loadingUsuarios || loadingRoles) {
     return (
       <div className="d-flex justify-content-center align-items-center" style={{ minHeight: 'calc(100vh - 200px)' }}>
@@ -193,13 +186,11 @@ const GestionUsuariosPage: React.FC = () => {
       <Card className="shadow-sm mb-4">
         <Card.Header className="bg-light p-3 d-flex justify-content-between align-items-center">
           <h1 className="h4 mb-0 text-dark"><PeopleFill className="me-2" />Gestión de Usuarios</h1>
-          {/* Modificar onClick del botón "Nuevo Usuario" */}
           <Button variant="success" onClick={() => { setError(null); setActionMessage(null); setShowCrearUsuarioModal(true); }}>
             <PersonPlusFill className="me-2" />
             Nuevo Usuario
           </Button>
         </Card.Header>
-        {/* ... (resto de la tabla de usuarios sin cambios) ... */}
         <Card.Body>
           {error && !actionMessage && <Alert variant="danger" onClose={() => setError(null)} dismissible>{error}</Alert>}
           {actionMessage && <Alert variant="success" onClose={() => setActionMessage(null)} dismissible>{actionMessage}</Alert>}
@@ -304,7 +295,6 @@ const GestionUsuariosPage: React.FC = () => {
       </Card>
 
       <Card className="shadow-sm mt-4">
-        {/* ... (Sección Gestión de Roles sin cambios) ... */}
         <Card.Header className="bg-light p-3 d-flex justify-content-between align-items-center">
           <h2 className="h4 mb-0 text-dark"><KeyFill className="me-2" />Gestión de Roles</h2>
           <Button variant="success" onClick={() => { setError(null); setActionMessage(null); setShowCrearRolModal(true); }}>
@@ -390,7 +380,6 @@ const GestionUsuariosPage: React.FC = () => {
         usuario={usuarioParaGestionarRoles}
         onRolesActualizados={handleRolesDeUsuarioActualizados}
       />
-      {/* NUEVO: Renderizar Modal para Crear Usuario */}
       <ModalCrearUsuario
         show={showCrearUsuarioModal}
         handleClose={() => setShowCrearUsuarioModal(false)}

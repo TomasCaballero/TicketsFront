@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import apiClient from '../services/apiClient';
 import { useAuth } from '../context/AuthContext';
 import { Permisos } from '../constants/permisos';
-import { useSortableData } from '../hooks/useSortableData'; // <-- Importamos nuestro hook
+import { useSortableData } from '../hooks/useSortableData'; 
 import { Button, Card, Spinner, Alert, Table, Badge, Form, InputGroup, Row, Col } from 'react-bootstrap';
 import { PencilSquare, Trash3, PlusCircle, SortAlphaDown, SortAlphaUp } from 'react-bootstrap-icons';
 import ModalCrearEditarCentroDeCosto from '../components/centros-costo/ModalCrearEditarCentroDeCosto';
@@ -26,7 +26,6 @@ const CentrosCostoListPage: React.FC = () => {
     const [searchResponsable, setSearchResponsable] = useState('');
     const [filterTipo, setFilterTipo] = useState('');
 
-    // Estados para el modal
     const [showModal, setShowModal] = useState(false);
     const [centroAEditar, setCentroAEditar] = useState<CentroDeCostoDto | null>(null);
 
@@ -73,7 +72,7 @@ const CentrosCostoListPage: React.FC = () => {
     const handleDelete = (id: string) => {
         if (window.confirm("¿Estás seguro de que deseas eliminar este Centro de Costo?")) {
             apiClient.delete(`/api/centrosdecosto/${id}`)
-                .then(() => fetchCentrosCosto()) // Refrescar la lista
+                .then(() => fetchCentrosCosto()) 
                 .catch(err => setError(err.response?.data?.message || 'Error al eliminar.'));
         }
     };

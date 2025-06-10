@@ -19,7 +19,6 @@ interface ModalCrearNotaProps {
   onNotaAgregada: (nuevaNota: NotaSimpleDto) => void;
 }
 
-// Interfaz para manejar archivos localmente con previsualización
 interface ArchivoLocal {
   id: string;
   file: File;
@@ -35,19 +34,16 @@ const ModalCrearNota: React.FC<ModalCrearNotaProps> = ({
 }) => {
   const [contenido, setContenido] = useState('');
   const [tiempoDeTrabajo, setTiempoDeTrabajo] = useState('');
-  // Usaremos nuestro nuevo tipo para el estado de los archivos
   const [archivos, setArchivos] = useState<ArchivoLocal[]>([]);
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Referencia al input de archivo para poder hacer click en él programáticamente
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const resetForm = () => {
     setContenido('');
     setTiempoDeTrabajo('');
-    // Limpiar URLs de previsualización para liberar memoria
     archivos.forEach(a => {
       if (a.previewUrl) URL.revokeObjectURL(a.previewUrl);
     });
@@ -60,7 +56,6 @@ const ModalCrearNota: React.FC<ModalCrearNotaProps> = ({
     handleClose();
   };
 
-  // Se ejecuta cuando el modal se cierra para limpiar las previsualizaciones
   useEffect(() => {
     return () => {
       archivos.forEach(a => {
@@ -169,7 +164,6 @@ const ModalCrearNota: React.FC<ModalCrearNotaProps> = ({
             />
           </Form.Group>
 
-          {/* ----- SECCIÓN DE ADJUNTOS MEJORADA ----- */}
           <Form.Group className="mb-3">
             <Form.Label>Adjuntos</Form.Label>
             <input
@@ -177,7 +171,7 @@ const ModalCrearNota: React.FC<ModalCrearNotaProps> = ({
               multiple
               ref={fileInputRef}
               onChange={handleFileChange}
-              className="d-none" // Ocultamos el input real
+              className="d-none" 
             />
             <Button variant="outline-secondary" onClick={() => fileInputRef.current?.click()} className="w-100">
                 <PlusCircle className="me-2"/>
@@ -203,7 +197,6 @@ const ModalCrearNota: React.FC<ModalCrearNotaProps> = ({
                 ))}
             </ListGroup>
           )}
-          {/* ----- FIN SECCIÓN DE ADJUNTOS ----- */}
 
         </Modal.Body>
         <Modal.Footer>

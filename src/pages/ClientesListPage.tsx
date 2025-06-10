@@ -7,7 +7,7 @@ import { Button, Card, Spinner, Alert, Table, Badge, Form, InputGroup, Col, Row 
 import { PencilSquare, Trash3, PlusCircle, SortAlphaDown, SortAlphaUp } from 'react-bootstrap-icons';
 import { Link } from 'react-router-dom';
 import type { ClienteDto } from '../types/clientes';
-import ModalCrearEditarCliente from '../components/clientes/ModalCrearEditarCliente'; // <-- Importar el modal
+import ModalCrearEditarCliente from '../components/clientes/ModalCrearEditarCliente';
 
 const ClientesListPage: React.FC = () => {
   const [clientes, setClientes] = useState<ClienteDto[]>([]);
@@ -16,7 +16,6 @@ const ClientesListPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const { tienePermiso } = useAuth();
 
-  // Estados para el modal
   const [showModal, setShowModal] = useState(false);
   const [clienteAEditar, setClienteAEditar] = useState<ClienteDto | null>(null);
 
@@ -44,7 +43,6 @@ const ClientesListPage: React.FC = () => {
     fetchClientes();
   }, []);
 
-  // --- LÓGICA PARA MANEJAR MODAL Y ELIMINAR ---
   const handleOpenCreateModal = () => {
     setClienteAEditar(null);
     setShowModal(true);
@@ -59,7 +57,6 @@ const ClientesListPage: React.FC = () => {
     if (window.confirm("¿Estás seguro? Esta acción no se puede deshacer.")) {
       apiClient.delete(`/api/clientes/${clienteId}`)
         .then(() => {
-            // Actualizar la UI inmediatamente
             setClientes(prev => prev.filter(c => c.clienteID !== clienteId));
         })
         .catch(err => setError(err.response?.data?.message || 'Error al eliminar el cliente.'));
@@ -68,10 +65,10 @@ const ClientesListPage: React.FC = () => {
   
   const handleSuccessModal = () => {
     setShowModal(false);
-    fetchClientes(); // Recargar la lista para ver los cambios
+    fetchClientes();
   };
 
-  const getSortIcon = (key: keyof ClienteDto) => { //... (sin cambios)
+  const getSortIcon = (key: keyof ClienteDto) => { 
     if (!sortConfig || sortConfig.key !== key) return null;
     return sortConfig.direction === 'ascending' ? <SortAlphaDown className="ms-1" /> : <SortAlphaUp className="ms-1" />;
   };
@@ -114,7 +111,6 @@ const ClientesListPage: React.FC = () => {
               {sortedItems.map(cliente => (
                 <tr key={cliente.clienteID}>
                   <td>
-                    {/* -- ENLACE A FUTURA PÁGINA DE DETALLES -- */}
                     <Link to={`/clientes/${cliente.clienteID}`}>{cliente.nombreCliente}</Link>
                   </td>
                   <td><Badge bg={cliente.tipoCliente === 1 ? 'primary' : 'secondary'}>{cliente.tipoCliente === 1 ? 'Empresa' : 'Persona'}</Badge></td>
@@ -135,7 +131,6 @@ const ClientesListPage: React.FC = () => {
         </Card.Body>
       </Card>
       
-      {/* RENDERIZADO DEL MODAL */}
       <ModalCrearEditarCliente
         show={showModal}
         handleClose={() => setShowModal(false)}

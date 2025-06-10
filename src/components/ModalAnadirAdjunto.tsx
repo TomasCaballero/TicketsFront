@@ -23,7 +23,7 @@ const ModalAnadirAdjunto: React.FC<ModalAnadirAdjuntoProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Limpiar estado cuando el modal se abre
+
     if (show) {
       setSelectedFile(null);
       setDescripcion('');
@@ -32,7 +32,6 @@ const ModalAnadirAdjunto: React.FC<ModalAnadirAdjuntoProps> = ({
     }
   }, [show]);
   
-  // Limpiar URL del objeto cuando el componente se desmonta o el preview cambia
   useEffect(() => {
     return () => {
       if (previewUrl) {

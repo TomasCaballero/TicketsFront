@@ -14,16 +14,7 @@ import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css'; 
 import 'react-pdf/dist/esm/Page/TextLayer.css'; 
 
-// SOLUCIÓN 1: Configurar worker con CDN (más confiable)
-// pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
-// SOLUCIÓN 2: Para proyectos con Vite, descomenta estas líneas y comenta la línea de arriba
-// pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-//   'pdfjs-dist/build/pdf.worker.min.js',
-//   import.meta.url,
-// ).toString();
-
-// SOLUCIÓN 3: Para proyectos con Webpack, descomenta esta línea y comenta las otras
 pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
 
 interface ModalPrevisualizarAdjuntoProps {
@@ -96,7 +87,7 @@ const ModalPrevisualizarAdjunto: React.FC<ModalPrevisualizarAdjuntoProps> = ({
 
   const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
     setNumPdfPages(numPages);
-    setPreviewError(null); // Limpiar errores previos si se carga exitosamente
+    setPreviewError(null); 
   };
 
   const onDocumentLoadError = (error: Error) => {
