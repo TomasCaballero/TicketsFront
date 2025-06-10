@@ -13,6 +13,7 @@ import CentrosCostoListPage from './pages/CentrosCostoListPage';
 import CentroDeCostoDetailPage from './pages/CentroDeCostoDetailPage';
 import ClientesListPage from './pages/ClientesListPage';
 import ClienteDetailPage from './pages/ClienteDetailPage';
+import DashboardPage from './pages/DashboardPage';
 
 // (El resto de las interfaces y componentes MainLayout, ProtectedRoute, DashboardPage, etc., no cambian)
 // ...
@@ -87,26 +88,7 @@ const ProtectedRoute: React.FC<{ children?: React.ReactNode; roles?: string[] }>
   return children ? <>{children}</> : <MainLayout />;
 };
 
-const DashboardPage = () => {
-  const { usuarioActual } = useAuth();
-  return (
-    <div className="card shadow-sm">
-      <div className="card-body p-4">
-        <h1 className="card-title h3 mb-4">Dashboard</h1>
-        {usuarioActual && (
-          <div className="mb-3">
-            <p className="mb-1"><span className="fw-medium">Bienvenido,</span> {usuarioActual.nombre || usuarioActual.username}!</p>
-            <p className="mb-1"><span className="fw-medium">ID:</span> {usuarioActual.id}</p>
-            <p className="mb-1"><span className="fw-medium">Email:</span> {usuarioActual.email}</p>
-            <p className="mb-0"><span className="fw-medium">Roles:</span> {usuarioActual.roles.join(', ')}</p>
-            <p className="mb-0"><span className="fw-medium">Activo:</span> {usuarioActual.estaActivo ? 'Sí' : 'No (Pendiente de activación)'}</p>
-          </div>
-        )}
-        <p className="text-muted">Este es tu panel de control principal.</p>
-      </div>
-    </div>
-  );
-};
+
 
 const ClientesListPagePlaceholder = () => <div className="card shadow-sm"><div className="card-body p-4"><h1 className="card-title h3">Lista de Clientes</h1><p>Contenido...</p></div></div>;
 const CentrosCostoListPagePlaceholder = () => <div className="card shadow-sm"><div className="card-body p-4"><h1 className="card-title h3">Lista de Centros de Costo</h1><p>Contenido...</p></div></div>;
