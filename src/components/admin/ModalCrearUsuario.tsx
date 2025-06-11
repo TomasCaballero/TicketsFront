@@ -1,17 +1,18 @@
 // src/components/admin/ModalCrearUsuario.tsx
 import React, { useState, useEffect, type FormEvent } from 'react';
 import apiClient from '../../services/apiClient';
-import type { RolDto } from '../../types/roles'; 
-import type { CrearUsuarioPorAdminDto } from '../../types/admin'; 
-import type { UsuarioAdminDto } from '../../types/admin'; 
+import type { RolDto } from '../../types/roles';
+import type { CrearUsuarioPorAdminDto } from '../../types/admin';
+import type { UsuarioAdminDto } from '../../types/admin';
 
 import Modal from 'react-bootstrap/Modal';
 import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
 import Alert from 'react-bootstrap/Alert';
 import Spinner from 'react-bootstrap/Spinner';
-import Select, { type MultiValue } from 'react-select'; 
+import Select, { type MultiValue } from 'react-select';
 import { Col, Row } from 'react-bootstrap';
+import PasswordInput from '../common/PasswordInput';
 
 interface SelectOption {
   value: string;
@@ -74,8 +75,8 @@ const ModalCrearUsuario: React.FC<ModalCrearUsuarioProps> = ({
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!username.trim() || !email.trim() || !password.trim() || !nombre.trim() || !apellido.trim()) {
-        setError("Todos los campos marcados con * son obligatorios.");
-        return;
+      setError("Todos los campos marcados con * son obligatorios.");
+      return;
     }
     setIsSubmitting(true);
     setError(null);
@@ -83,29 +84,29 @@ const ModalCrearUsuario: React.FC<ModalCrearUsuarioProps> = ({
     const dto: CrearUsuarioPorAdminDto = {
       username: username.trim(),
       email: email.trim(),
-      password: password, 
+      password: password,
       nombre: nombre.trim(),
       apellido: apellido.trim(),
       estaActivo,
-      roles: selectedRoles.map(option => option.value), 
+      roles: selectedRoles.map(option => option.value),
     };
 
     try {
       const response = await apiClient.post<UsuarioAdminDto>('/api/admin/usuarios', dto);
-      onUsuarioCreado(response.data); 
+      onUsuarioCreado(response.data);
       handleClose();
     } catch (err: any) {
       if (err.response && err.response.data) {
         const apiError = err.response.data;
         let errorMessage = 'Error al crear el usuario.';
         if (apiError.errors && Array.isArray(apiError.errors)) {
-            errorMessage = apiError.errors.map((e: any) => e.description || e.code || JSON.stringify(e)).join(', ');
+          errorMessage = apiError.errors.map((e: any) => e.description || e.code || JSON.stringify(e)).join(', ');
         } else if (apiError.title) {
-            errorMessage = apiError.title;
+          errorMessage = apiError.title;
         } else if (apiError.message || apiError.Message) {
-            errorMessage = apiError.message || apiError.Message;
+          errorMessage = apiError.message || apiError.Message;
         } else if (typeof apiError === 'string') {
-            errorMessage = apiError;
+          errorMessage = apiError;
         }
         setError(errorMessage);
       } else {
@@ -116,7 +117,7 @@ const ModalCrearUsuario: React.FC<ModalCrearUsuarioProps> = ({
       setIsSubmitting(false);
     }
   };
-  
+
   const rolOptions: SelectOption[] = todosLosRoles.map(r => ({ value: r.nombre, label: r.nombre }));
 
   return (
@@ -157,37 +158,42 @@ const ModalCrearUsuario: React.FC<ModalCrearUsuarioProps> = ({
           </Row>
           <Form.Group className="mb-3" controlId="passwordUsuario">
             <Form.Label>Contraseña *</Form.Label>
-            <Form.Control type="password" value={password} onChange={(e) => setPassword(e.target.value)} required disabled={isSubmitting} />
+            <PasswordInput
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              disabled={isSubmitting}
+            />
             <Form.Text className="text-muted">Mínimo 8 caracteres, debe incluir mayúsculas, minúsculas y números.</Form.Text>
           </Form.Group>
-          
+
           <Form.Group className="mb-3" controlId="rolesUsuario">
             <Form.Label>Roles (Opcional)</Form.Label>
             <Select
-                isMulti
-                options={rolOptions}
-                isLoading={isLoadingRoles}
-                className="basic-multi-select"
-                classNamePrefix="select"
-                placeholder="Seleccione roles..."
-                onChange={(selected) => setSelectedRoles(selected as MultiValue<SelectOption>)}
-                value={selectedRoles}
-                isDisabled={isSubmitting || isLoadingRoles}
-                isClearable
+              isMulti
+              options={rolOptions}
+              isLoading={isLoadingRoles}
+              className="basic-multi-select"
+              classNamePrefix="select"
+              placeholder="Seleccione roles..."
+              onChange={(selected) => setSelectedRoles(selected as MultiValue<SelectOption>)}
+              value={selectedRoles}
+              isDisabled={isSubmitting || isLoadingRoles}
+              isClearable
             />
           </Form.Group>
 
           <Form.Group className="mb-3" controlId="estaActivoUsuario">
-            <Form.Check 
-                type="switch"
-                id="esta-activo-switch"
-                label="Usuario Activo"
-                checked={estaActivo}
-                onChange={(e) => setEstaActivo(e.target.checked)}
-                disabled={isSubmitting}
+            <Form.Check
+              type="switch"
+              id="esta-activo-switch"
+              label="Usuario Activo"
+              checked={estaActivo}
+              onChange={(e) => setEstaActivo(e.target.checked)}
+              disabled={isSubmitting}
             />
-             <Form.Text className="text-muted">
-                Si no está activo, el usuario no podrá iniciar sesión.
+            <Form.Text className="text-muted">
+              Si no está activo, el usuario no podrá iniciar sesión.
             </Form.Text>
           </Form.Group>
 
