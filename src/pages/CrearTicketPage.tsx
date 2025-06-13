@@ -8,6 +8,7 @@ import type { UsuarioSimpleDto } from '../types/auth';
 import { PrioridadTicketEnum, TipoClienteEnum } from '../types/tickets';
 import type { ClienteParaSelectorDto as ClienteParaSelectorDtoBase } from '../types/clientes';
 import { Editor } from '@tinymce/tinymce-react';
+import RichTextEditor from '../components/editor/RichTextEditor';
 
 interface ClienteParaSelectorDto extends ClienteParaSelectorDtoBase {
   cuit_RUC?: string;
@@ -55,7 +56,7 @@ interface ArchivoLocal {
   id: string;
   file: File;
   descripcion: string;
-  previewUrl?: string; 
+  previewUrl?: string;
 }
 
 const CrearTicketPage: React.FC = () => {
@@ -186,14 +187,12 @@ const CrearTicketPage: React.FC = () => {
   const filteredClientes = useMemo(() => {
     if (searchTermCliente) {
       return clientes.filter(c =>
-        c.nombreCliente.toLowerCase().includes(searchTermCliente.toLowerCase()) ||
-        (c.cuit_RUC && c.cuit_RUC.includes(searchTermCliente))
-      ).slice(0, 10);
+        c.nombreCliente.toLowerCase().includes(searchTermCliente.toLowerCase())
+      ).slice(0, 5);
     }
     if (isClienteInputFocused) {
-      return clientes.slice(-3);
+      return clientes.slice(0, 3); // Muestra los primeros 3 como "recientes"
     }
-    
     return [];
   }, [searchTermCliente, clientes, isClienteInputFocused]);
 
@@ -213,12 +212,13 @@ const CrearTicketPage: React.FC = () => {
     setSelectedCliente(cliente);
     setSearchTermCliente(cliente.nombreCliente);
     setContactoId('');
-    setIsClienteInputFocused(false); 
+    setIsClienteInputFocused(false);
   };
+
   const handleCentroDeCostoSelect = (cdc: CentroDeCostoParaSelectorDto) => {
     setSelectedCentroDeCosto(cdc);
     setSearchTermCentroDeCosto(cdc.nombre);
-    setIsCentroCostoInputFocused(false); 
+    setIsCentroCostoInputFocused(false);
   };
   const handleClienteCreadoEnModal = (nuevoCliente: ClienteParaSelectorDto) => {
     setClientes(prevClientes => [...prevClientes, nuevoCliente].sort((a, b) => a.nombreCliente.localeCompare(b.nombreCliente)));
@@ -247,7 +247,7 @@ const CrearTicketPage: React.FC = () => {
     setSelectedCliente(clienteActualizado);
     setContactoId(nuevoContacto.contactoID);
 
-    setShowCrearContactoModal(false); 
+    setShowCrearContactoModal(false);
   };
 
 
@@ -394,28 +394,13 @@ const CrearTicketPage: React.FC = () => {
                 </Row>
                 <Form.Group className="mb-3" controlId="titulo">
                   <Form.Label>Título *</Form.Label>
-                  <Form.Control type="text" placeholder="Ej: Problema con inicio de sesión" value={titulo} onChange={(e) => setTitulo(e.target.value)} required disabled={isSubmitting} />
+                  <Form.Control type="text" autoComplete="off" placeholder="Ej: Problema con inicio de sesión" value={titulo} onChange={(e) => setTitulo(e.target.value)} required disabled={isSubmitting} />
                 </Form.Group>
                 <Form.Group className="mb-4" controlId="descripcion">
                   <Form.Label>Descripción</Form.Label>
-                  <Editor
-                    apiKey='4diy8fren78ukba5i30x08jzf50dazp3g1w70stpafjir4n1' 
-                    value={descripcion}
-                    onEditorChange={(content, editor) => setDescripcion(content)}
-                    init={{
-                      height: 250,
-                      menubar: false,
-                      plugins: [
-                        'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
-                        'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-                        'insertdatetime', 'media', 'table', 'help', 'wordcount'
-                      ],
-                      toolbar: 'undo redo | blocks | ' +
-                        'bold italic forecolor | alignleft aligncenter ' +
-                        'alignright alignjustify | bullist numlist outdent indent | ' +
-                        'removeformat | help',
-                      content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }'
-                    }}
+                  <RichTextEditor
+                    content={descripcion}
+                    onChange={(newContent) => setDescripcion(newContent)}
                   />
                 </Form.Group>
               </Col>
@@ -426,21 +411,27 @@ const CrearTicketPage: React.FC = () => {
                   <InputGroup>
                     <Form.Control
                       type="text"
-                      placeholder="Buscar o hacer clic para ver recientes..."
+                      placeholder="Buscar o hacer clic para ver opciones..."
                       value={searchTermCliente}
-                      onChange={(e) => { setSearchTermCliente(e.target.value); setSelectedCliente(null); setContactoId(''); }}
+                      onChange={(e) => {
+                        setSearchTermCliente(e.target.value);
+                        setSelectedCliente(null); // Limpia la selección si el usuario escribe
+                        setContactoId('');
+                      }}
                       onFocus={() => setIsClienteInputFocused(true)}
-                      onBlur={() => setTimeout(() => setIsClienteInputFocused(false), 150)} 
-                      disabled={isSubmitting || clientes.length === 0}
+                      onBlur={() => setTimeout(() => setIsClienteInputFocused(false), 200)}
+                      autoComplete="off"
                     />
                     <Button variant="outline-success" onClick={() => setShowCrearClienteModal(true)}>Nuevo</Button>
                   </InputGroup>
 
                   {!selectedCliente && filteredClientes.length > 0 &&
-                    <ListGroup className="mt-1 position-absolute" style={{ zIndex: 1000, width: 'calc(100% - 2.5rem)' }}>
+                    <ListGroup className="mt-1 w-100 bg-green" style={{ zIndex: 1000 }}>
                       {filteredClientes.map(c => (
-                        <ListGroup.Item action key={c.clienteID} onClick={() => handleClienteSelect(c)} type="button">
+                        <ListGroup.Item action key={c.clienteID} onClick={() => handleClienteSelect(c)} type="button" style={{ border: '1px solid #ccc' }}>
+
                           {c.nombreCliente} {c.cuit_RUC && `(${c.cuit_RUC})`}
+
                         </ListGroup.Item>
                       ))}
                     </ListGroup>
@@ -472,16 +463,21 @@ const CrearTicketPage: React.FC = () => {
                       <small className="form-text text-warning">Este cliente empresa no tiene contactos. Puede agregar uno nuevo.</small>}
                   </Form.Group>
                 )}
-                <Form.Group className="mb-3" controlId="centroDeCostoBusqueda">
+                <Form.Group className="mb-3 position-relative" controlId="centroDeCostoBusqueda">
                   <Form.Label>Centro de Costo</Form.Label>
                   <InputGroup>
                     <Form.Control
                       type="text"
-                      placeholder="Buscar..."
+                      placeholder="Buscar o hacer clic para ver opciones..."
+                      // La lógica aquí es idéntica a la del campo Cliente
                       value={searchTermCentroDeCosto}
-                      onChange={(e) => { /* ... */ }}
+                      onChange={(e) => {
+                        setSearchTermCentroDeCosto(e.target.value);
+                        setSelectedCentroDeCosto(null);
+                      }}
                       onFocus={() => setIsCentroCostoInputFocused(true)}
-                      onBlur={() => setTimeout(() => setIsCentroCostoInputFocused(false), 150)}
+                      onBlur={() => setTimeout(() => setIsCentroCostoInputFocused(false), 200)}
+                      autoComplete="off"
                       disabled={isSubmitting || isCentroCostoLocked}
                     />
                     <Button variant="outline-success" onClick={() => setShowCrearCentroDeCostoModal(true)} disabled={isCentroCostoLocked}>
@@ -489,34 +485,46 @@ const CrearTicketPage: React.FC = () => {
                     </Button>
                   </InputGroup>
 
-                  {!selectedCentroDeCosto && filteredCentrosDeCosto.length > 0 &&
-                    <ListGroup className="mt-1 position-absolute" style={{ zIndex: 999, width: 'calc(100% - 2.5rem)' }}>
+                  {!selectedCentroDeCosto && filteredCentrosDeCosto.length > 0 && (
+                    <ListGroup className="mt-1 position-absolute w-100" style={{ zIndex: 999 }}>
                       {filteredCentrosDeCosto.map(cdc => (
-                        <ListGroup.Item action key={cdc.centroDeCostoID} onClick={() => handleCentroDeCostoSelect(cdc)} type="button">
+                        <ListGroup.Item action key={cdc.centroDeCostoID} onClick={() => handleCentroDeCostoSelect(cdc)} style={{ border: '1px solid #ccc' }}>
                           {cdc.nombre}
                         </ListGroup.Item>
                       ))}
                     </ListGroup>
-                  }
-                  {selectedCentroDeCosto && <small className="form-text text-muted">Seleccionado: {selectedCentroDeCosto.nombre}</small>}
+                  )}
+                  {selectedCentroDeCosto && <small className="form-text text-muted mt-1 d-block">Seleccionado: {selectedCentroDeCosto.nombre}</small>}
                 </Form.Group>
-                <Row><Col md={6}><Form.Group className="mb-3" controlId="usuarioResponsableId"><Form.Label>Responsable</Form.Label><Form.Select value={usuarioResponsableId} onChange={(e) => setUsuarioResponsableId(e.target.value)} disabled={isSubmitting || isUsuariosLoading || opcionesUsuariosParaAsignar.length === 0}><option value="">{isUsuariosLoading ? 'Cargando...' : 'Ninguno'}</option>{opcionesUsuariosParaAsignar.map(u => (<option key={u.value} value={u.value}>{u.label}</option>))}</Form.Select></Form.Group></Col><Col md={6}><Form.Group className="mb-4" controlId="participantesIds"><Form.Label>Participantes</Form.Label><Select isMulti options={opcionesUsuariosParaAsignar} className="basic-multi-select" classNamePrefix="select" placeholder={isUsuariosLoading ? 'Cargando...' : 'Seleccione...'} onChange={(s) => setSelectedParticipantes(s as MultiValue<SelectOption>)} value={selectedParticipantes} isDisabled={isSubmitting || isUsuariosLoading} isClearable /></Form.Group></Col></Row>
-              </Col>
-            </Row>
-            <hr />
-            <Row>
-              {ticketType === 'Desarrollo' && (
-                <Col md={6}>
-                  <h5 className="mb-3 mt-2 text-primary">Detalles de Desarrollo</h5>
-                  <Row>
-                    <Col md={6}><Form.Group className="mb-3" controlId="fechaInicioPlanificada"><Form.Label>Fecha Inicio Planificada</Form.Label><Form.Control type="date" value={fechaInicioPlanificada} onChange={(e) => setFechaInicioPlanificada(e.target.value)} disabled={isSubmitting} /></Form.Group></Col>
-                    <Col md={6}><Form.Group className="mb-3" controlId="fechaFinPlanificada"><Form.Label>Fecha Fin Planificada</Form.Label><Form.Control type="date" value={fechaFinPlanificada} onChange={(e) => setFechaFinPlanificada(e.target.value)} disabled={isSubmitting} /></Form.Group></Col>
-                  </Row>
-                  <Form.Group className="mb-4" controlId="horasEstimadas"><Form.Label>Horas Estimadas</Form.Label><Form.Control type="number" placeholder="Ej: 8.5" value={horasEstimadas} onChange={(e) => setHorasEstimadas(e.target.value)} step="0.1" min="0" disabled={isSubmitting} /></Form.Group>
-                </Col>
-              )}
+                <Row>
+                  <Col md={6}>
+                    <Form.Group className="mb-3" controlId="usuarioResponsableId">
+                      <Form.Label>Responsable</Form.Label>
+                      <Form.Select value={usuarioResponsableId} onChange={(e) => setUsuarioResponsableId(e.target.value)} disabled={isSubmitting || isUsuariosLoading || opcionesUsuariosParaAsignar.length === 0}>
+                        <option value="">{isUsuariosLoading ? 'Cargando...' : 'Ninguno'}</option>{opcionesUsuariosParaAsignar.map(u => (<option key={u.value} value={u.value}>{u.label}</option>))}
+                      </Form.Select>
+                    </Form.Group>
+                  </Col>
+                  <Col md={6}>
+                    <Form.Group className="mb-4" controlId="participantesIds">
+                      <Form.Label>Participantes</Form.Label>
+                      <Select isMulti options={opcionesUsuariosParaAsignar} className="basic-multi-select" classNamePrefix="select" placeholder={isUsuariosLoading ? 'Cargando...' : 'Seleccione...'} onChange={(s) => setSelectedParticipantes(s as MultiValue<SelectOption>)} value={selectedParticipantes} isDisabled={isSubmitting || isUsuariosLoading} isClearable />
+                    </Form.Group>
+                  </Col>
+                </Row>
 
-              <Col md={ticketType === 'Desarrollo' ? 6 : 12}>
+                {ticketType === 'Desarrollo' && (
+                  <Col>
+                    <h5 className="mb-3 mt-2 text-primary">Detalles de Desarrollo</h5>
+                    <Row>
+                      <Col md={6}><Form.Group className="mb-3" controlId="fechaInicioPlanificada"><Form.Label>Fecha Inicio Planificada</Form.Label><Form.Control type="date" value={fechaInicioPlanificada} onChange={(e) => setFechaInicioPlanificada(e.target.value)} disabled={isSubmitting} /></Form.Group></Col>
+                      <Col md={6}><Form.Group className="mb-3" controlId="fechaFinPlanificada"><Form.Label>Fecha Fin Planificada</Form.Label><Form.Control type="date" value={fechaFinPlanificada} onChange={(e) => setFechaFinPlanificada(e.target.value)} disabled={isSubmitting} /></Form.Group></Col>
+                    </Row>
+                    <Form.Group className="mb-4" controlId="horasEstimadas"><Form.Label>Horas Estimadas</Form.Label><Form.Control type="number" placeholder="Ej: 8.5" value={horasEstimadas} onChange={(e) => setHorasEstimadas(e.target.value)} step="0.1" min="0" disabled={isSubmitting} /></Form.Group>
+                  </Col>
+                )}
+
+
                 <Card className="mb-4">
                   <Card.Header className="bg-light p-3 d-flex justify-content-between align-items-center">
                     <h5 className="mb-0 text-dark"><Paperclip size={20} className="me-2" />Adjuntos</h5>
@@ -554,6 +562,7 @@ const CrearTicketPage: React.FC = () => {
                 </Card>
               </Col>
             </Row>
+
 
             <div className="d-grid gap-2 d-md-flex justify-content-md-end mt-4 pt-3 border-top">
               <Button variant="outline-secondary" onClick={() => navigate('/tickets')} disabled={isSubmitting} className="me-md-2">Cancelar</Button>

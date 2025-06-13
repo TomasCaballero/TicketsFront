@@ -92,20 +92,12 @@ const ModalSubirAdjunto: React.FC<ModalSubirAdjuntoProps> = ({
     }
     
     let uploadUrl = '';
-    if (ticketId) { 
-      uploadUrl = `/api/tickets/${ticketId}/adjuntos`;
+    if (ticketId) {
+        // La URL correcta apunta a AdjuntosController, no a TicketsController
+        uploadUrl = `/api/adjuntos/ticket/${ticketId}`;
     } else if (notaId) {
-      if (ticketId) { 
-          uploadUrl = `/api/tickets/${ticketId}/notas/${notaId}/adjuntos`;
-      } else {
-           setError("Para adjuntar a una nota, se requiere el ID del ticket padre en la URL.");
-           setIsSubmitting(false);
-           return;
-      }
-    } else {
-        setError("No se especificó un destino para el adjunto (ni ticketId ni notaId).");
-        setIsSubmitting(false);
-        return;
+        // Esta es la URL correcta para adjuntar a una nota
+        uploadUrl = `/api/adjuntos/nota/${ticketId}/${notaId}`;
     }
 
     try {

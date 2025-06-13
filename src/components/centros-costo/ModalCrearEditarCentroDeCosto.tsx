@@ -5,7 +5,7 @@ import { TipoCentroCosto } from '../../types/tickets';
 import type { UsuarioSimpleDto } from '../../types/auth';
 import { Modal, Form, Button, Spinner, Alert, Row, Col } from 'react-bootstrap';
 import Select, { type MultiValue } from 'react-select';
-import { Editor } from '@tinymce/tinymce-react';
+import RichTextEditor from '../editor/RichTextEditor';
 
 interface ModalProps {
   show: boolean;
@@ -40,7 +40,7 @@ const ModalCrearEditarCentroDeCosto: React.FC<ModalProps> = ({ show, handleClose
           setError("No se pudieron cargar los usuarios para los selectores.");
         });
     }
-  }, [show]); 
+  }, [show]);
 
   useEffect(() => {
     if (show) {
@@ -62,7 +62,7 @@ const ModalCrearEditarCentroDeCosto: React.FC<ModalProps> = ({ show, handleClose
         setParticipantes([]);
       }
     }
-  }, [show, isEditMode, centroDeCostoAEditar, usuarios, opcionesUsuarios]); 
+  }, [show, isEditMode, centroDeCostoAEditar, usuarios, opcionesUsuarios]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,7 +80,7 @@ const ModalCrearEditarCentroDeCosto: React.FC<ModalProps> = ({ show, handleClose
       } else {
         const payload: CrearCentroDeCostoDto = { nombre, descripcion, tipo, usuarioResponsableId: responsableId, participantesIds };
         const response = await apiClient.post<CentroDeCostoDto>('/api/centrosdecosto', payload);
-        onSuccess(response.data); 
+        onSuccess(response.data);
       }
       handleClose();
     } catch (err: any) {
@@ -100,28 +100,14 @@ const ModalCrearEditarCentroDeCosto: React.FC<ModalProps> = ({ show, handleClose
           {error && <Alert variant="danger">{error}</Alert>}
           <Form.Group className="mb-3" controlId="nombre">
             <Form.Label>Nombre *</Form.Label>
-            <Form.Control type="text" value={nombre} onChange={e => setNombre(e.target.value)} required disabled={isSubmitting} />
+            <Form.Control type="text" value={nombre} onChange={e => setNombre(e.target.value)} required disabled={isSubmitting} autoComplete="off" />
           </Form.Group>
           <Form.Group className="mb-4" controlId="descripcion">
             <Form.Label>Descripción</Form.Label>
-            <Editor
-              apiKey="4diy8fren78ukba5i30x08jzf50dazp3g1w70stpafjir4n1"
-              value={descripcion}
-              onEditorChange={(content, editor) => setDescripcion(content)}
-              init={{
-                height: 250,
-                menubar: false,
-                plugins: [
-                  'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
-                  'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-                  'insertdatetime', 'media', 'table', 'help', 'wordcount'
-                ],
-                toolbar: 'undo redo | blocks | ' +
-                  'bold italic forecolor | alignleft aligncenter ' +
-                  'alignright alignjustify | bullist numlist outdent indent | ' +
-                  'removeformat | help',
-                content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }'
-              }}
+
+            <RichTextEditor
+              content={descripcion}
+              onChange={(newContent) => setDescripcion(newContent)}
             />
           </Form.Group>
           <Row>

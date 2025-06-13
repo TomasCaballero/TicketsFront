@@ -35,6 +35,15 @@ const Navbar: React.FC<NavbarProps> = ({ usuarioActual, logout }) => {
     navLinks.push({ to: "/admin/usuarios", text: "Configuración" }); 
   }
 
+  const handleLogoutClick = () => {
+    // window.confirm() muestra un diálogo nativo del navegador
+    if (window.confirm("¿Estás seguro de que deseas cerrar la sesión?")) {
+      // Si el usuario hace clic en "Aceptar", se ejecuta la función de logout
+      logout();
+    }
+    // Si hace clic en "Cancelar", no pasa nada.
+  };
+
   return (
     <NavbarBs expand="lg" bg="light" variant="light" className="shadow-sm">
       <Container fluid>
@@ -71,7 +80,7 @@ const Navbar: React.FC<NavbarProps> = ({ usuarioActual, logout }) => {
             <Button
               variant="danger"
               size="sm"
-              onClick={logout}
+              onClick={handleLogoutClick} 
             >
               Cerrar Sesión
             </Button>

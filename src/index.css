@@ -3,3 +3,29 @@
   margin: 0px;
   box-sizing: border-box;
 }
+.fontSize{
+  background-color: rgba(211, 211, 211, 0.317);
+  padding: 10px;
+  border: solid 1px rgba(0, 0, 0, 0.08);
+  min-height: 200px;
+  border-radius: 5px;
+  margin-bottom: 15px;
+}
+
+.centroCosto{
+  align-content: center;
+  gap: 10px;
+}
+
+.centroCosto p{
+  font-size: 23px;
+  font-weight: 600;
+  background-color: rgba(0, 0, 0, 0.131);
+  padding: 10px;
+  border-radius: 5px;
+  border: solid 1px rgba(0, 0, 0, 0.08);
+}
+
+.bg-green{
+  background-color: green
+}

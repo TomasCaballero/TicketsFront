@@ -60,14 +60,17 @@ const CentroDeCostoDetailPage: React.FC = () => {
                 <ArrowLeft /> Volver a la lista
             </Link>
             <Card className="mb-4">
-                <Card.Header>
+                <Card.Header className='d-flex justify-content-between align-items-center'>
                     <h1 className="h4 mb-0">Detalles de: {centroDeCosto.nombre}</h1>
-                    {tienePermiso(Permisos.CrearTickets) && (
+                    <div>
+                         {tienePermiso(Permisos.CrearTickets) && (
                         <Button variant="primary" onClick={handleCrearTicket}>
                             <TicketPerforated className="me-2"/>
                             Crear Ticket Vinculado
                         </Button>
                     )}
+                    </div>
+                   
                 </Card.Header>
                 <Card.Body>
                     <p><strong>Descripción:</strong> {centroDeCosto.descripcion || "N/A"}</p>

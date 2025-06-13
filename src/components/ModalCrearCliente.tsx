@@ -164,6 +164,7 @@ const ModalCrearCliente: React.FC<ModalCrearClienteProps> = ({
                     <Form.Control
                     type="text"
                     value={nombreCliente}
+                    autoComplete="off"
                     onChange={(e) => setNombreCliente(e.target.value)}
                     required
                     />
@@ -188,6 +189,7 @@ const ModalCrearCliente: React.FC<ModalCrearClienteProps> = ({
                 <Form.Label>CUIT/RUC (Opcional)</Form.Label>
                 <Form.Control
                 type="text"
+                autoComplete="off"
                 placeholder="Ej: 30-12345678-9"
                 value={cuitRuc}
                 onChange={(e) => setCuitRuc(e.target.value)}
@@ -199,6 +201,7 @@ const ModalCrearCliente: React.FC<ModalCrearClienteProps> = ({
             <Form.Label>Dirección Fiscal (Opcional)</Form.Label>
             <Form.Control
               type="text"
+              autoComplete="off"
               value={direccionFiscal}
               onChange={(e) => setDireccionFiscal(e.target.value)}
             />
@@ -210,6 +213,7 @@ const ModalCrearCliente: React.FC<ModalCrearClienteProps> = ({
                     <Form.Label>Teléfono Principal (Opcional)</Form.Label>
                     <Form.Control
                     type="text"
+                    autoComplete="off"
                     value={telefonoPrincipal}
                     onChange={(e) => setTelefonoPrincipal(e.target.value)}
                     />
@@ -220,6 +224,7 @@ const ModalCrearCliente: React.FC<ModalCrearClienteProps> = ({
                     <Form.Label>Email Principal (Opcional)</Form.Label>
                     <Form.Control
                     type="email"
+                    autoComplete="off"
                     value={emailPrincipal}
                     onChange={(e) => setEmailPrincipal(e.target.value)}
                     />
@@ -238,6 +243,7 @@ const ModalCrearCliente: React.FC<ModalCrearClienteProps> = ({
                         <Form.Label>Nombre del Contacto *</Form.Label>
                         <Form.Control
                         type="text"
+                        autoComplete="off"
                         value={contactoNombre}
                         onChange={(e) => setContactoNombre(e.target.value)}
                         required={tipoCliente === TipoClienteEnum.Empresa}
@@ -249,6 +255,7 @@ const ModalCrearCliente: React.FC<ModalCrearClienteProps> = ({
                         <Form.Label>Apellido del Contacto *</Form.Label>
                         <Form.Control
                         type="text"
+                        autoComplete="off"
                         value={contactoApellido}
                         onChange={(e) => setContactoApellido(e.target.value)}
                         required={tipoCliente === TipoClienteEnum.Empresa}
@@ -262,6 +269,7 @@ const ModalCrearCliente: React.FC<ModalCrearClienteProps> = ({
                         <Form.Label>Email del Contacto *</Form.Label>
                         <Form.Control
                         type="email"
+                        autoComplete="off"
                         value={contactoEmail}
                         onChange={(e) => setContactoEmail(e.target.value)}
                         required={tipoCliente === TipoClienteEnum.Empresa}
@@ -273,6 +281,7 @@ const ModalCrearCliente: React.FC<ModalCrearClienteProps> = ({
                         <Form.Label>Teléfono Directo (Opcional)</Form.Label>
                         <Form.Control
                         type="text"
+                        autoComplete="off"
                         value={contactoTelefono}
                         onChange={(e) => setContactoTelefono(e.target.value)}
                         />
@@ -283,6 +292,7 @@ const ModalCrearCliente: React.FC<ModalCrearClienteProps> = ({
                 <Form.Label>Cargo (Opcional)</Form.Label>
                 <Form.Control
                   type="text"
+                  autoComplete="off"
                   value={contactoCargo}
                   onChange={(e) => setContactoCargo(e.target.value)}
                 />

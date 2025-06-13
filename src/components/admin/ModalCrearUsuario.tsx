@@ -132,13 +132,13 @@ const ModalCrearUsuario: React.FC<ModalCrearUsuarioProps> = ({
             <Col md={6}>
               <Form.Group className="mb-3" controlId="nombreUsuario">
                 <Form.Label>Nombre *</Form.Label>
-                <Form.Control type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} required disabled={isSubmitting} />
+                <Form.Control type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} required disabled={isSubmitting} autoComplete="off"/>
               </Form.Group>
             </Col>
             <Col md={6}>
               <Form.Group className="mb-3" controlId="apellidoUsuario">
                 <Form.Label>Apellido *</Form.Label>
-                <Form.Control type="text" value={apellido} onChange={(e) => setApellido(e.target.value)} required disabled={isSubmitting} />
+                <Form.Control type="text" value={apellido} onChange={(e) => setApellido(e.target.value)} required disabled={isSubmitting} autoComplete="off"/>
               </Form.Group>
             </Col>
           </Row>
@@ -146,13 +146,13 @@ const ModalCrearUsuario: React.FC<ModalCrearUsuarioProps> = ({
             <Col md={6}>
               <Form.Group className="mb-3" controlId="usernameUsuario">
                 <Form.Label>Nombre de Usuario *</Form.Label>
-                <Form.Control type="text" value={username} onChange={(e) => setUsername(e.target.value)} required disabled={isSubmitting} />
+                <Form.Control type="text" value={username} onChange={(e) => setUsername(e.target.value)} required disabled={isSubmitting} autoComplete="off"/>
               </Form.Group>
             </Col>
             <Col md={6}>
               <Form.Group className="mb-3" controlId="emailUsuario">
                 <Form.Label>Email *</Form.Label>
-                <Form.Control type="email" value={email} onChange={(e) => setEmail(e.target.value)} required disabled={isSubmitting} />
+                <Form.Control type="email" value={email} onChange={(e) => setEmail(e.target.value)} required disabled={isSubmitting} autoComplete="off"/>
               </Form.Group>
             </Col>
           </Row>
@@ -163,6 +163,7 @@ const ModalCrearUsuario: React.FC<ModalCrearUsuarioProps> = ({
               onChange={(e) => setPassword(e.target.value)}
               required
               disabled={isSubmitting}
+              autoComplete="off"
             />
             <Form.Text className="text-muted">Mínimo 8 caracteres, debe incluir mayúsculas, minúsculas y números.</Form.Text>
           </Form.Group>

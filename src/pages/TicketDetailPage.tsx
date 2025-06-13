@@ -3,7 +3,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import Select, { type MultiValue } from 'react-select';
 import apiClient from '../services/apiClient';
-import { type TicketDto, type NotaSimpleDto, type AdjuntoSimpleDto, PrioridadTicketEnum, EstadoTicketEnum } from '../types/tickets';
+import { type TicketDto, type NotaSimpleDto, type AdjuntoSimpleDto, PrioridadTicketEnum, EstadoTicketEnum, type ActualizarTicketDto } from '../types/tickets';
 import type { UsuarioSimpleDto } from '../types/auth';
 
 import Container from 'react-bootstrap/Container';
@@ -18,6 +18,7 @@ import ListGroup from 'react-bootstrap/ListGroup';
 import Form from 'react-bootstrap/Form';
 import { ArrowLeft, Paperclip, ChatDots, PersonFill, CalendarEvent, ClockHistory, BarChartLine, PlusCircle, Download, Trash3, Eye as EyeIcon, PencilFill } from 'react-bootstrap-icons'; // Renombrado Eye a EyeIcon para evitar conflicto
 import Collapse from 'react-bootstrap/Collapse';
+import { PersonBadge } from 'react-bootstrap-icons';
 
 
 import ModalCrearNota from '../components/ModalCrearNota';
@@ -157,18 +158,27 @@ const TicketDetailPage: React.FC = () => {
   };
 
   const handleGuardarParticipantes = async () => {
-    if (!ticketId) return;
-
+    if (!ticketId || !ticket) return;
     setIsSavingParticipants(true);
     setError(null);
-
     const participantesIds = selectedParticipantes.map(p => p.value);
-
+    const payload: ActualizarTicketDto = {
+      titulo: ticket.titulo,
+      descripcion: ticket.descripcion,
+      prioridad: ticket.prioridad,
+      estado: ticket.estado,
+      centroDeCostoID: ticket.centroDeCosto?.centroDeCostoID || null,
+      usuarioResponsableID: ticket.usuarioResponsable?.id || null,
+      fechaInicioPlanificada: ticket.fechaInicioPlanificada,
+      fechaFinPlanificada: ticket.fechaFinPlanificada,
+      horasEstimadas: ticket.horasEstimadas,
+      participantesIds: participantesIds,
+    };
     try {
-      await apiClient.put(`/api/tickets/${ticketId}`, { participantesIds });
+      await apiClient.put(`/api/tickets/${ticketId}`, payload);
 
       setIsManagingParticipants(false);
-      await fetchTicketDetails(false); 
+      await fetchTicketDetails(false);
 
     } catch (err: any) {
       console.error("Error al actualizar participantes:", err);
@@ -208,7 +218,7 @@ const TicketDetailPage: React.FC = () => {
     }
 
     const usuariosFiltrados = todosLosUsuarios.filter(usuario =>
-     
+
       usuario.roles.includes(rolRequerido) || usuario.roles.includes('Administrador')
     );
 
@@ -275,29 +285,28 @@ const TicketDetailPage: React.FC = () => {
         <Card.Body className="p-4">
           <Row>
             <Col md={8}>
-              <h5 className="text-muted mb-3">Información del Ticket</h5>
-              <p><strong>Descripción del Ticket:</strong> {ticket.descripcion || 'N/A'}</p>
+              <Col className="mb-3">
+                <div className='text-muted mb-3  centroCosto'><h5>Centro de Costo:</h5> <p>{ticket.centroDeCosto?.nombre || 'N/A'}</p></div>
+              </Col>
+              <div>
+                <h3 className='text-muted mb-3'>Descripción del Ticket:</h3>
+                <div dangerouslySetInnerHTML={{ __html: ticket.descripcion || 'N/A' }} className='fontSize' />
+              </div>
               <Row>
-                <Col sm={6} md={4} className="mb-3">
+                <Col className="mb-3">
                   <strong>Cliente:</strong>
                   <p>{ticket.cliente ? `${ticket.cliente.nombre} ${ticket.cliente.apellido || ''}`.trim() : 'N/A'}</p>
                 </Col>
-                <Col sm={6} md={4} className="mb-3">
-                  <strong>Creado por:</strong>
-                  <p>{ticket.usuarioCreador?.nombreCompleto || 'N/A'}</p>
-                </Col>
-                <Col sm={6} md={4} className="mb-3">
-                  <strong>Responsable:</strong>
-                  <p>{ticket.usuarioResponsable?.nombreCompleto || 'No asignado'}</p>
-                </Col>
-                <Col sm={6} md={4} className="mb-3">
-                  <strong>Centro de Costo:</strong>
-                  <p>{ticket.centroDeCosto?.nombre || 'N/A'}</p>
-                </Col>
-                <Col sm={6} md={4} className="mb-3">
-                  <strong>Tipo de Ticket:</strong>
-                  <p>{ticket.tipoTicket}</p>
-                </Col>
+                {ticket.contacto && (
+                  <Col sm={6} md={4} className="mb-3">
+                    <strong><PersonBadge className="me-1" />Contacto del Cliente:</strong>
+                    <p className="mb-0">{ticket.contacto.nombreCompleto}</p>
+                    {ticket.contacto.email && (
+                      <small className="text-muted">{ticket.contacto.email}</small>
+                    )}
+                  </Col>
+                )}
+
               </Row>
               {ticket.tipoTicket === 'Desarrollo' && (
                 <>
@@ -306,7 +315,7 @@ const TicketDetailPage: React.FC = () => {
                   <Row>
                     <Col sm={6} md={4} className="mb-2"><strong>Inicio Planificado:</strong> {formatDate(ticket.fechaInicioPlanificada)}</Col>
                     <Col sm={6} md={4} className="mb-2"><strong>Fin Planificado:</strong> {formatDate(ticket.fechaFinPlanificada)}</Col>
-                    <Col sm={6} md={4} className="mb-2"><strong>Horas Estimadas:</strong> {ticket.horasEstimadas?.toString() || 'N/A'}</Col>
+                    <Col sm={6} md={4} className="mb-2"><strong>Horas Estimadas:</strong> {ticket.horasEstimadas?.toString() || 'N/A'} hs</Col>
                   </Row>
                 </>
               )}
@@ -322,82 +331,97 @@ const TicketDetailPage: React.FC = () => {
               <div className="mb-2"><CalendarEvent size={16} className="me-1 text-muted" /> <strong>Creado:</strong> {formatDate(ticket.fechaCreacion, true)}</div>
               <div className="mb-3"><ClockHistory size={16} className="me-1 text-muted" /> <strong>Últ. Modif.:</strong> {formatDate(ticket.fechaUltimaModificacion, true)}</div>
               <div><BarChartLine size={16} className="me-1 text-muted" /> <strong>Horas Acumuladas:</strong> {ticket.horasAcumuladas} hs</div>
-            </Col>
-          </Row>
+              <hr />
+              <div className="d-flex flex-column gap-2">
+                <div className='mb-2'>
+                  <strong>Creado por:</strong> {ticket.usuarioCreador?.nombreCompleto || 'N/A'}
+                </div>
+                <div>
+                  <strong>Responsable:</strong> {ticket.usuarioResponsable?.nombreCompleto || 'No asignado'}
+                </div>
+              </div>
 
-          {ticket.participantes && ticket.participantes.length > 0 && (
-            <>
-              <hr className="my-4" />
-              <h5 className="text-muted mb-3"><PersonFill size={20} className="me-1" />Participantes ({ticket.participantes.length})</h5>
-              <ListGroup horizontal className="flex-wrap">
-                {ticket.participantes.map(p => (
-                  <ListGroup.Item key={p.id} className="mb-1 me-1 border-0 bg-light rounded px-2 py-1 text-sm">
-                    {p.nombreCompleto || p.username}
-                  </ListGroup.Item>
-                ))}
-              </ListGroup>
-
-              <div className="mt-3">
-                {tienePermiso(Permisos.EditarTickets) && (
-                  <Button
-                    variant="outline-info"
-                    size="sm"
-                    onClick={() => setIsManagingParticipants(!isManagingParticipants)}
-                    aria-controls="participantes-collapse-panel"
-                    aria-expanded={isManagingParticipants}
-                  >
-                    <PencilFill className="me-2" />
-                    Gestionar Participantes
-                  </Button>
+              <Row>
+                <div className='mt-3'><strong>Participantes: </strong></div>
+                {ticket.participantes.length > 0 && (
+                  <ListGroup horizontal className="flex-wrap mb-3">
+                    {ticket.participantes.map(p => (
+                      <ListGroup.Item key={p.id} className="mb-1 me-1 border-0 bg-light rounded px-2 py-1 text-sm">
+                        {p.nombreCompleto || p.username}
+                      </ListGroup.Item>
+                    ))}
+                  </ListGroup>
                 )}
 
-                <Collapse in={isManagingParticipants}>
-                  <div id="participantes-collapse-panel" className="mt-3">
-                    <Card bg="light">
-                      <Card.Body>
-                        <Form.Group controlId="participantesSelector">
-                          <Form.Label className="fw-bold">Seleccionar participantes</Form.Label>
-                          <Select
-                            isMulti
-                            options={opcionesUsuarios}
-                            value={selectedParticipantes}
-                            onChange={(selected) => setSelectedParticipantes(selected as MultiValue<{ value: string; label: string }>)}
-                            isLoading={!todosLosUsuarios.length}
-                            placeholder="Buscar y añadir usuarios..."
-                            isClearable
-                            closeMenuOnSelect={false}
-                          />
-                        </Form.Group>
-                        <div className="d-flex justify-content-end mt-3">
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            className="me-2"
-                            onClick={() => setIsManagingParticipants(false)}
-                            disabled={isSavingParticipants}
-                          >
-                            Cancelar
-                          </Button>
-                          <Button
-                            variant="primary"
-                            size="sm"
-                            onClick={handleGuardarParticipantes}
-                            disabled={isSavingParticipants}
-                          >
-                            {isSavingParticipants ? (
-                              <><Spinner as="span" size="sm" className="me-1" /> Guardando...</>
-                            ) : (
-                              'Guardar Cambios'
-                            )}
-                          </Button>
+                {tienePermiso(Permisos.EditarTickets) && (
+                  <div>
+                    <Button
+                      variant="outline-info"
+                      size="sm"
+                      onClick={() => setIsManagingParticipants(!isManagingParticipants)}
+                      aria-controls="participantes-collapse-panel"
+                      aria-expanded={isManagingParticipants}
+                    >
+                      <PencilFill className="me-2" />
+                      {isManagingParticipants ? 'Cerrar Gestión' : 'Gestionar Participantes'}
+                    </Button>
+
+                    <Collapse in={isManagingParticipants}>
+                      <div id="participantes-collapse-panel" className="mt-3">
+                        <div id="participantes-collapse-panel" className="mt-3">
+                          <Card bg="light">
+                            <Card.Body>
+                              <Form.Group controlId="participantesSelector">
+                                <Form.Label className="fw-bold">Seleccionar participantes</Form.Label>
+                                <Select
+                                  isMulti
+                                  options={opcionesUsuarios}
+                                  value={selectedParticipantes}
+                                  onChange={(selected) => setSelectedParticipantes(selected as MultiValue<{ value: string; label: string }>)}
+                                  isLoading={!todosLosUsuarios.length}
+                                  placeholder="Buscar y añadir usuarios..."
+                                  isClearable
+                                  closeMenuOnSelect={false}
+                                />
+                              </Form.Group>
+                              <div className="d-flex justify-content-end mt-3">
+                                <Button
+                                  variant="secondary"
+                                  size="sm"
+                                  className="me-2"
+                                  onClick={() => setIsManagingParticipants(false)}
+                                  disabled={isSavingParticipants}
+                                >
+                                  Cancelar
+                                </Button>
+                                <Button
+                                  variant="primary"
+                                  size="sm"
+                                  onClick={handleGuardarParticipantes}
+                                  disabled={isSavingParticipants}
+                                >
+                                  {isSavingParticipants ? (
+                                    <><Spinner as="span" size="sm" className="me-1" /> Guardando...</>
+                                  ) : (
+                                    'Guardar Cambios'
+                                  )}
+                                </Button>
+                              </div>
+                            </Card.Body>
+                          </Card>
                         </div>
-                      </Card.Body>
-                    </Card>
+                      </div>
+                    </Collapse>
                   </div>
-                </Collapse>
-              </div>
-            </>
-          )}
+                )}
+
+                
+              </Row>
+            </Col>
+
+          </Row>
+
+
         </Card.Body>
       </Card>
 
@@ -421,7 +445,7 @@ const TicketDetailPage: React.FC = () => {
                     {nota.tiempoDeTrabajo != null && ` (${nota.tiempoDeTrabajo} hs)`}
                   </Badge>
                 </div>
-                <p className="mb-1 mt-2 text-truncate">{nota.contenido}</p> 
+                <div dangerouslySetInnerHTML={{ __html: nota.contenido || '' }} />
                 {nota.adjuntos && nota.adjuntos.length > 0 && (
                   <small className="text-muted"><Paperclip /> {nota.adjuntos.length} adjunto(s)</small>
                 )}
@@ -457,9 +481,9 @@ const TicketDetailPage: React.FC = () => {
                     <span className="text-muted text-sm">({adjunto.tamanoArchivoKB.toFixed(2)} KB)</span>
                   </div>
                   {tienePermiso(Permisos.EditarTickets) && (
-                  <Button variant="outline-danger" size="sm" className="p-1" title="Eliminar Adjunto" onClick={() => handleEliminarAdjunto(adjunto.adjuntoID)}>
-                    <Trash3 size={16} />
-                  </Button>
+                    <Button variant="outline-danger" size="sm" className="p-1" title="Eliminar Adjunto" onClick={() => handleEliminarAdjunto(adjunto.adjuntoID)}>
+                      <Trash3 size={16} />
+                    </Button>
                   )}
                 </div>
                 {adjunto.descripcion && (

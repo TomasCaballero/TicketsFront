@@ -79,6 +79,7 @@ const ModalCrearRol: React.FC<ModalCrearRolProps> = ({ show, handleClose, onRolC
               required
               disabled={isSubmitting}
               autoFocus
+              autoComplete="off"
             />
             <Form.Text className="text-muted">
               El nombre del rol debe ser único. No uses espacios ni caracteres especiales.

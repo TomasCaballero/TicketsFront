@@ -65,6 +65,12 @@ export interface AdjuntoSimpleDto {
   descripcion?: string | null;
 }
 
+export interface ContactoSimpleDto {
+  contactoID: string;
+  nombreCompleto: string;
+  email?: string;
+}
+
 export interface TicketDto {
   ticketID: string;
   numeroTicketFormateado: string;
@@ -77,6 +83,7 @@ export interface TicketDto {
   tipoTicket: string; 
 
   cliente?: ClienteSimpleDto | null;
+  contacto?: ContactoSimpleDto | null;
   centroDeCosto?: CentroDeCostoSimpleDto | null;
   usuarioCreador?: UsuarioSimpleDto | null;
   usuarioResponsable?: UsuarioSimpleDto | null;
@@ -119,6 +126,7 @@ export interface ActualizarTicketDto {
     estado?: EstadoTicketEnum | null; 
     centroDeCostoID?: string | null; 
     usuarioResponsableID?: string | null; 
+    participantesIds?: string[];
     fechaInicioPlanificada?: string | null; 
     fechaFinPlanificada?: string | null;    
     horasEstimadas?: number | null;
