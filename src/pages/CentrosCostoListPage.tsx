@@ -126,10 +126,10 @@ const CentrosCostoListPage: React.FC = () => {
                                 <th onClick={() => requestSort('nombre')} style={{ cursor: 'pointer' }}>
                                     Nombre {getSortIcon('nombre')}
                                 </th>
-                                <th>Tipo</th>
+                                <th className='d-flex justify-content-center align-items-center'>Tipo</th>
                                 <th>Responsable</th>
-                                <th>Participantes</th>
-                                <th>Acciones</th>
+                                <th className='text-center'>Participantes</th>
+                                <th className='d-flex justify-content-center align-items-center'>Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -138,10 +138,10 @@ const CentrosCostoListPage: React.FC = () => {
                                     <td>
                                         <Link to={`/centros-costo/${cc.centroDeCostoID}`}>{cc.nombre}</Link>
                                     </td>
-                                    <td><Badge bg="info">{tipoMap[cc.tipo] || 'N/A'}</Badge></td>
+                                    <td className='text-center'><Badge bg="info">{tipoMap[cc.tipo] || 'N/A'}</Badge></td>
                                     <td>{cc.usuarioResponsable?.nombreCompleto || <i className="text-muted">N/A</i>}</td>
-                                    <td>{cc.participantes.length}</td>
-                                    <td>
+                                    <td className='text-center'>{cc.participantes.length}</td>
+                                    <td className='d-flex justify-content-center align-items-center'>
                                         {tienePermiso(Permisos.EditarCentrosDeCosto) && (
                                             <Button variant="outline-warning" size="sm" className="me-2" onClick={() => handleOpenEditModal(cc)}><PencilSquare /></Button>
                                         )}

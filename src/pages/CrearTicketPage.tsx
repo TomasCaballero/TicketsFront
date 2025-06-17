@@ -7,7 +7,6 @@ import type { CrearTicketSoporteDto, CrearTicketDesarrolloDto } from '../types/t
 import type { UsuarioSimpleDto } from '../types/auth';
 import { PrioridadTicketEnum, TipoClienteEnum } from '../types/tickets';
 import type { ClienteParaSelectorDto as ClienteParaSelectorDtoBase } from '../types/clientes';
-import { Editor } from '@tinymce/tinymce-react';
 import RichTextEditor from '../components/editor/RichTextEditor';
 
 interface ClienteParaSelectorDto extends ClienteParaSelectorDtoBase {

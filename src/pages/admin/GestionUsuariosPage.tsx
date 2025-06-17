@@ -3,11 +3,12 @@ import apiClient from '../../services/apiClient';
 import type { UsuarioAdminDto } from '../../types/admin';
 import type { RolDto } from '../../types/roles';
 import { Table, Button, Alert, Spinner, Badge, Card, Form, Row, Col } from 'react-bootstrap';
-import { CheckCircleFill, XCircleFill, PersonPlusFill, PeopleFill, KeyFill, PencilSquare, Trash3, PlusCircle } from 'react-bootstrap-icons';
+import { PersonPlusFill, PeopleFill, KeyFill, PencilSquare, Trash3, PlusCircle, ShieldLockFill } from 'react-bootstrap-icons';
 import ModalCrearRol from '../../components/admin/ModalCrearRol';
 import ModalEditarPermisosRol from '../../components/admin/ModalEditarPermisosRol';
 import ModalGestionarRolesUsuario from '../../components/admin/ModalGestionarRolesUsuario';
 import ModalCrearUsuario from '../../components/admin/ModalCrearUsuario';
+import ModalCambiarContrasena from '../../components/admin/ModalCambiarContrasena';
 
 const GestionUsuariosPage: React.FC = () => {
   const [usuarios, setUsuarios] = useState<UsuarioAdminDto[]>([]);
@@ -28,6 +29,9 @@ const GestionUsuariosPage: React.FC = () => {
   const [showGestionarRolesModal, setShowGestionarRolesModal] = useState<boolean>(false);
   const [usuarioParaGestionarRoles, setUsuarioParaGestionarRoles] = useState<UsuarioAdminDto | null>(null);
   const [showCrearUsuarioModal, setShowCrearUsuarioModal] = useState<boolean>(false);
+
+  const [showCambiarPassModal, setShowCambiarPassModal] = useState(false);
+  const [usuarioParaCambiarPass, setUsuarioParaCambiarPass] = useState<UsuarioAdminDto | null>(null);
 
 
   const fetchUsuarios = async () => {
@@ -172,6 +176,11 @@ const GestionUsuariosPage: React.FC = () => {
     setError(null);
   };
 
+  const abrirModalCambiarContrasena = (usuario: UsuarioAdminDto) => {
+    setUsuarioParaCambiarPass(usuario);
+    setShowCambiarPassModal(true);
+  };
+
   if (loadingUsuarios || loadingRoles) {
     return (
       <div className="d-flex justify-content-center align-items-center" style={{ minHeight: 'calc(100vh - 200px)' }}>
@@ -279,13 +288,23 @@ const GestionUsuariosPage: React.FC = () => {
                       >
                         <KeyFill /> Roles
                       </Button>
+
+                      <Button
+                        variant="outline-secondary"
+                        size="sm"
+                        title="Cambiar Contraseña"
+                        onClick={() => abrirModalCambiarContrasena(usuario)}
+                        className="ms-1"
+                      >
+                        <ShieldLockFill />
+                      </Button>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </Table>
           )}
-           {filteredUsers.length === 0 && <p className="text-center text-muted mt-3">No se encontraron usuarios que coincidan con los filtros.</p>}
+          {filteredUsers.length === 0 && <p className="text-center text-muted mt-3">No se encontraron usuarios que coincidan con los filtros.</p>}
         </Card.Body>
         {usuarios.length > 0 && (
           <Card.Footer className="bg-light text-muted text-sm p-2">
@@ -346,7 +365,7 @@ const GestionUsuariosPage: React.FC = () => {
                 ))}
               </tbody>
             </Table>
-            
+
           )}
           {filteredRoles.length === 0 && <p className="text-center text-muted mt-3">No se encontraron roles.</p>}
         </Card.Body>
@@ -384,6 +403,15 @@ const GestionUsuariosPage: React.FC = () => {
         show={showCrearUsuarioModal}
         handleClose={() => setShowCrearUsuarioModal(false)}
         onUsuarioCreado={handleUsuarioCreado}
+      />
+      <ModalCambiarContrasena
+        show={showCambiarPassModal}
+        handleClose={() => setUsuarioParaCambiarPass(null)}
+        usuario={usuarioParaCambiarPass}
+        onSuccess={(message) => {
+          setShowCambiarPassModal(false);
+          setActionMessage(message);
+        }}
       />
     </>
   );

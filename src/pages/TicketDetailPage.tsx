@@ -16,7 +16,7 @@ import Alert from 'react-bootstrap/Alert';
 import Badge from 'react-bootstrap/Badge';
 import ListGroup from 'react-bootstrap/ListGroup';
 import Form from 'react-bootstrap/Form';
-import { ArrowLeft, Paperclip, ChatDots, PersonFill, CalendarEvent, ClockHistory, BarChartLine, PlusCircle, Download, Trash3, Eye as EyeIcon, PencilFill } from 'react-bootstrap-icons'; // Renombrado Eye a EyeIcon para evitar conflicto
+import { ArrowLeft, Paperclip, ChatDots, PersonFill, CalendarEvent, ClockHistory, BarChartLine, PlusCircle, Download, Trash3, Eye as EyeIcon, PencilFill, PencilSquare } from 'react-bootstrap-icons'; // Renombrado Eye a EyeIcon para evitar conflicto
 import Collapse from 'react-bootstrap/Collapse';
 import { PersonBadge } from 'react-bootstrap-icons';
 
@@ -24,6 +24,7 @@ import { PersonBadge } from 'react-bootstrap-icons';
 import ModalCrearNota from '../components/ModalCrearNota';
 import ModalSubirAdjunto from '../components/ModalSubirAdjunto';
 import ModalPrevisualizarAdjunto from '../components/ModalPrevisualizarAdjunto';
+import ModalEditarNota from '../components/ModalEditarNota';
 import ModalVerNota from '../components/ModalVerNota';
 import { useAuth } from '../context/AuthContext';
 import { Permisos } from '../constants/permisos';
@@ -82,9 +83,15 @@ const TicketDetailPage: React.FC = () => {
   const [selectedParticipantes, setSelectedParticipantes] = useState<MultiValue<{ value: string; label: string }>>([]);
   const [isSavingParticipants, setIsSavingParticipants] = useState<boolean>(false);
 
-  const { usuarioActual } = useAuth();
-  const { tienePermiso } = useAuth();
 
+  const [showEditarNotaModal, setShowEditarNotaModal] = useState(false);
+  const [notaAEditar, setNotaAEditar] = useState<NotaSimpleDto | null>(null);
+  const { tienePermiso } = useAuth();
+  const { usuarioActual } = useAuth();
+
+  const puedeEditar =
+    tienePermiso(Permisos.EditarTickets) || // Puede editar si tiene el permiso global
+    (ticket && usuarioActual?.id === ticket.usuarioResponsable?.id);
 
   const fetchTicketDetails = async (showLoader = true) => {
     if (!ticketId) {
@@ -188,6 +195,11 @@ const TicketDetailPage: React.FC = () => {
     }
   };
 
+  const handleAbrirEditarNota = (nota: NotaSimpleDto) => {
+    setNotaAEditar(nota);
+    setShowEditarNotaModal(true);
+  };
+
   useEffect(() => {
     if (isManagingParticipants && ticket) {
       const currentParticipants = ticket.participantes.map(p => ({
@@ -275,9 +287,9 @@ const TicketDetailPage: React.FC = () => {
             Ticket: {ticket.numeroTicketFormateado} - <span className="fw-normal">{ticket.titulo}</span>
           </h1>
           <div>
-            {tienePermiso(Permisos.EditarTickets) && (
+            {puedeEditar && (
               <Button variant="outline-primary" size="sm" className="me-2" onClick={() => navigate(`/tickets/editar/${ticket.ticketID}`)}>
-                Editar Ticket
+                <PencilSquare className="me-1" /> Editar Ticket
               </Button>
             )}
           </div>
@@ -415,7 +427,7 @@ const TicketDetailPage: React.FC = () => {
                   </div>
                 )}
 
-                
+
               </Row>
             </Col>
 
@@ -434,23 +446,54 @@ const TicketDetailPage: React.FC = () => {
         </Card.Header>
         {ticket.notas.length > 0 ? (
           <ListGroup variant="flush">
-            {ticket.notas.map(nota => (
-              <ListGroup.Item key={nota.notaID} action onClick={() => handleVerDetallesNota(nota)} style={{ cursor: 'pointer' }} className="p-3">
-                <div className="d-flex w-100 justify-content-between">
-                  <small className="text-muted">
-                    <strong>{nota.usuarioCreador?.nombreCompleto || 'Usuario desconocido'}</strong> el {formatDate(nota.fechaCreacion, true)}
-                  </small>
-                  <Badge bg={nota.tipoNota === 'Desarrollo' ? 'info' : 'secondary'} pill>
-                    {nota.tipoNota}
-                    {nota.tiempoDeTrabajo != null && ` (${nota.tiempoDeTrabajo} hs)`}
-                  </Badge>
-                </div>
-                <div dangerouslySetInnerHTML={{ __html: nota.contenido || '' }} />
-                {nota.adjuntos && nota.adjuntos.length > 0 && (
-                  <small className="text-muted"><Paperclip /> {nota.adjuntos.length} adjunto(s)</small>
-                )}
-              </ListGroup.Item>
-            ))}
+            
+            {ticket.notas.map((nota, index) => {
+              // --- Lógica para mostrar el botón de editar ---
+              // La lista ya viene ordenada por fecha descendente, así que el índice 0 es la última nota.
+              const esUltimaNota = index === 0;
+              const esMiNota = nota.usuarioCreador?.id === usuarioActual?.id;
+              const puedoEditarNota = esUltimaNota && esMiNota;
+              // --- Fin de la lógica ---
+
+              return (
+                <ListGroup.Item key={nota.notaID} className="p-3">
+                  <div className="d-flex w-100 justify-content-between">
+                    <small className="text-muted">
+                      <strong>{nota.usuarioCreador?.nombreCompleto || 'Usuario desconocido'}</strong> el {formatDate(nota.fechaCreacion, true)}
+                    </small>
+                    {/* --- SECCIÓN DE BOTONES DE ACCIÓN --- */}
+                    <div>
+                      {puedoEditarNota && (
+                        <Button
+                          variant="outline-warning"
+                          size="sm"
+                          className="me-2"
+                          title="Editar Nota"
+                          onClick={(e) => {
+                            e.stopPropagation(); // Evita que se abra el modal de "Ver"
+                            handleAbrirEditarNota(nota);
+                          }}
+                        >
+                          <PencilSquare />
+                        </Button>
+                      )}
+                      <Button
+                        variant="outline-info"
+                        size="sm"
+                        title="Ver Detalles"
+                        onClick={() => handleVerDetallesNota(nota)}
+                      >
+                        Ver
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="mt-2 mb-1" dangerouslySetInnerHTML={{ __html: nota.contenido || '' }} />
+                  {nota.adjuntos && nota.adjuntos.length > 0 && (
+                    <small className="text-muted"><Paperclip /> {nota.adjuntos.length} adjunto(s)</small>
+                  )}
+                </ListGroup.Item>
+              );
+            })}
           </ListGroup>
         ) : (
           <Card.Body><p className="text-muted mb-0">No hay notas para este ticket.</p></Card.Body>
@@ -549,6 +592,16 @@ const TicketDetailPage: React.FC = () => {
             show={showVerNotaModal}
             handleClose={() => setShowVerNotaModal(false)}
             nota={notaSeleccionada}
+          />
+          <ModalEditarNota
+            show={showEditarNotaModal}
+            handleClose={() => setShowEditarNotaModal(false)}
+            onSuccess={() => {
+              setShowEditarNotaModal(false);
+              fetchTicketDetails(false); // Recargar para ver cambios
+            }}
+            notaAEditar={notaAEditar}
+            ticketId={ticket!.ticketID}
           />
         </>
       )}

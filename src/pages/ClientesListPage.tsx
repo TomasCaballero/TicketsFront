@@ -8,6 +8,7 @@ import { PencilSquare, Trash3, PlusCircle, SortAlphaDown, SortAlphaUp } from 're
 import { Link } from 'react-router-dom';
 import type { ClienteDto } from '../types/clientes';
 import ModalCrearEditarCliente from '../components/clientes/ModalCrearEditarCliente';
+import ModalCrearCliente from '../components/ModalCrearCliente';
 
 const ClientesListPage: React.FC = () => {
   const [clientes, setClientes] = useState<ClienteDto[]>([]);
@@ -17,6 +18,10 @@ const ClientesListPage: React.FC = () => {
   const { tienePermiso } = useAuth();
 
   const [showModal, setShowModal] = useState(false);
+  // const [clienteAEditar, setClienteAEditar] = useState<ClienteDto | null>(null);
+
+  const [showCrearModal, setShowCrearModal] = useState(false);
+  const [showEditarModal, setShowEditarModal] = useState(false);
   const [clienteAEditar, setClienteAEditar] = useState<ClienteDto | null>(null);
 
   const filteredClients = useMemo(() => {
@@ -46,6 +51,12 @@ const ClientesListPage: React.FC = () => {
   const handleOpenCreateModal = () => {
     setClienteAEditar(null);
     setShowModal(true);
+  };
+
+   const handleSuccess = () => {
+    setShowCrearModal(false);
+    setShowEditarModal(false);
+    fetchClientes();
   };
   
   const handleOpenEditModal = (cliente: ClienteDto) => {
@@ -84,7 +95,9 @@ const ClientesListPage: React.FC = () => {
             <Col md={6}><h1 className="h4 mb-0">Clientes</h1></Col>
             <Col md={6} className="d-flex justify-content-end">
                 {tienePermiso(Permisos.CrearClientes) && (
-                    <Button variant="primary" onClick={handleOpenCreateModal}><PlusCircle className="me-2"/>Nuevo Cliente</Button>
+                    <Button variant="primary" onClick={() => setShowCrearModal(true)}>
+                        <PlusCircle className="me-2"/>Nuevo Cliente
+                    </Button>
                 )}
             </Col>
           </Row>
@@ -136,6 +149,11 @@ const ClientesListPage: React.FC = () => {
         handleClose={() => setShowModal(false)}
         onSuccess={handleSuccessModal}
         clienteAEditar={clienteAEditar}
+      />
+      <ModalCrearCliente
+        show={showCrearModal}
+        handleClose={() => setShowCrearModal(false)}
+        onClienteCreado={handleSuccess}
       />
     </>
   );

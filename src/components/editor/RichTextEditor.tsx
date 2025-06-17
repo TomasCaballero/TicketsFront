@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import MenuBar from './MenuBar';
@@ -23,6 +23,12 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange }) =>
       onChange(editor.getHTML());
     },
   });
+
+  useEffect(() => {
+    if (editor && content !== editor.getHTML()) {
+      editor.commands.setContent(content, false);
+    }
+  }, [content, editor]);
 
   return (
     <div className="border rounded">
