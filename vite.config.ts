@@ -12,7 +12,7 @@ import viteBasicSslPlugin from '@vitejs/plugin-basic-ssl'
 // export default defineConfig({
 //   plugins: [react(), viteBasicSslPlugin()],
 //   server: {
-//     https: true,
+//     https: {}, // Use an empty object to enable HTTPS with default settings
 //     host: '0.0.0.0', // <-- permite recibir conexiones desde cualquier IP
 //     port: 5173
 //   }

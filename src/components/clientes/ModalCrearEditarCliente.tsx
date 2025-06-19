@@ -61,7 +61,7 @@ const ModalCrearEditarCliente: React.FC<ModalProps> = ({ show, handleClose, onSu
                 };
                 await apiClient.put(`/api/clientes/${clienteAEditar.clienteID}`, payload);
             } else {
-                const payload: CrearClienteDto = { nombreCliente, tipoCliente, cuit_RUC: cuitRuc, emailPrincipal };
+                const payload: CrearClienteDto = { nombreCliente, tipoCliente, cuit_RUC: cuitRuc, emailPrincipal, telefonoPrincipal };
                 await apiClient.post('/api/clientes', payload);
             }
             onSuccess();

@@ -68,7 +68,7 @@ const ModalCrearContacto: React.FC<ModalCrearContactoProps> = ({
       nombre,
       apellido,
       email,
-      telefonoDirecto: telefonoDirecto || undefined,
+      telefonoDirecto: telefonoDirecto,
       cargo: cargo || undefined,
       esPrincipal: false,
     };
@@ -135,17 +135,17 @@ const ModalCrearContacto: React.FC<ModalCrearContactoProps> = ({
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  required
                 />
               </Form.Group>
             </Col>
             <Col md={6}>
               <Form.Group className="mb-3">
-                <Form.Label>Teléfono Directo (Opcional)</Form.Label>
+                <Form.Label>Teléfono Directo *</Form.Label>
                 <Form.Control
                   type="text"
                   value={telefonoDirecto}
                   onChange={(e) => setTelefonoDirecto(e.target.value)}
+                  required
                 />
               </Form.Group>
             </Col>

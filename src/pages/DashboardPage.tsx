@@ -1,3 +1,4 @@
+// src/pages/DashboardPage.tsx
 import React, { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import apiClient from '../services/apiClient';
@@ -7,11 +8,15 @@ import type { UsuarioAdminDto } from '../types/admin';
 import type { TicketDto } from '../types/tickets';
 import { EstadoTicketEnum } from '../types/tickets';
 import { PersonCheck, TicketDetailed, JournalCheck, CalendarWeek } from 'react-bootstrap-icons';
+// Importamos el tipo para la respuesta paginada
+import type { PagedResultDto } from '../types/common';
+
 
 const DashboardPage: React.FC = () => {
   const { usuarioActual } = useAuth();
   const [usuarios, setUsuarios] = useState<UsuarioAdminDto[]>([]);
-  const [tickets, setTickets] = useState<TicketDto[]>([]);
+  // --- CAMBIO 1: El estado ahora guardará el objeto paginado o null ---
+  const [pagedTickets, setPagedTickets] = useState<PagedResultDto<TicketDto> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -19,12 +24,13 @@ const DashboardPage: React.FC = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
+        // --- CAMBIO 2: Especificamos que esperamos un PagedResultDto<TicketDto> ---
         const [usuariosRes, ticketsRes] = await Promise.all([
           usuarioActual?.roles.includes('Administrador') ? apiClient.get<UsuarioAdminDto[]>('/api/admin/usuarios') : Promise.resolve({ data: [] }),
-          apiClient.get<TicketDto[]>('/api/tickets')
+          apiClient.get<PagedResultDto<TicketDto>>('/api/tickets', { params: { pageSize: 100 } }) // Pedimos hasta 100 tickets para el dashboard
         ]);
         setUsuarios(usuariosRes.data);
-        setTickets(ticketsRes.data);
+        setPagedTickets(ticketsRes.data); // Guardamos el objeto de paginación completo
       } catch (err: any) {
         setError("Error al cargar los datos para el dashboard.");
       } finally {
@@ -34,23 +40,26 @@ const DashboardPage: React.FC = () => {
     fetchData();
   }, [usuarioActual]);
 
+  // --- CAMBIO 3: Usamos pagedTickets.items en lugar de 'tickets' y manejamos el caso inicial (null) ---
+  const allTickets = useMemo(() => pagedTickets?.items || [], [pagedTickets]);
+
   const usuariosPendientes = useMemo(() => 
     usuarios.filter(u => !u.estaActivo), 
   [usuarios]);
 
   const ticketsSinAsignar = useMemo(() => 
-    tickets.filter(t => !t.usuarioResponsable && t.estado !== EstadoTicketEnum.RESUELTO && t.estado !== EstadoTicketEnum.CERRADO),
-  [tickets]);
+    allTickets.filter(t => !t.usuarioResponsable && t.estado !== EstadoTicketEnum.RESUELTO && t.estado !== EstadoTicketEnum.CERRADO),
+  [allTickets]);
 
   const misTicketsAsignados = useMemo(() =>
-    tickets.filter(t => t.usuarioResponsable?.id === usuarioActual?.id && t.estado !== EstadoTicketEnum.RESUELTO && t.estado !== EstadoTicketEnum.CERRADO)
+    allTickets.filter(t => t.usuarioResponsable?.id === usuarioActual?.id && t.estado !== EstadoTicketEnum.RESUELTO && t.estado !== EstadoTicketEnum.CERRADO)
       .sort((a, b) => a.prioridad > b.prioridad ? -1 : 1), 
-  [tickets, usuarioActual]);
+  [allTickets, usuarioActual]);
 
   const proximasEntregas = useMemo(() =>
-    tickets.filter(t => t.tipoTicket === 'Desarrollo' && t.fechaFinPlanificada && (t.estado !== EstadoTicketEnum.RESUELTO && t.estado !== EstadoTicketEnum.CERRADO))
+    allTickets.filter(t => t.tipoTicket === 'Desarrollo' && t.fechaFinPlanificada && (t.estado !== EstadoTicketEnum.RESUELTO && t.estado !== EstadoTicketEnum.CERRADO))
       .sort((a, b) => new Date(a.fechaFinPlanificada!).getTime() - new Date(b.fechaFinPlanificada!).getTime()), 
-  [tickets]);
+  [allTickets]);
 
   if (loading) return <div className="text-center p-5"><Spinner animation="border" /></div>;
   if (error) return <Alert variant="danger">{error}</Alert>;

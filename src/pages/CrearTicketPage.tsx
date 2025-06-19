@@ -9,9 +9,9 @@ import { PrioridadTicketEnum, TipoClienteEnum } from '../types/tickets';
 import type { ClienteParaSelectorDto as ClienteParaSelectorDtoBase } from '../types/clientes';
 import RichTextEditor from '../components/editor/RichTextEditor';
 
-interface ClienteParaSelectorDto extends ClienteParaSelectorDtoBase {
-  cuit_RUC?: string;
-}
+// --- Importamos el tipo PagedResultDto ---
+import type { PagedResultDto } from '../types/common';
+
 
 import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
@@ -38,6 +38,10 @@ type TicketType = 'Soporte' | 'Desarrollo';
 interface SelectOption {
   value: string;
   label: string;
+}
+
+interface ClienteParaSelectorDto extends ClienteParaSelectorDtoBase {
+  cuit_RUC?: string;
 }
 
 interface ContactoParaClienteDto {
@@ -117,12 +121,21 @@ const CrearTicketPage: React.FC = () => {
     const cargarDatosGenerales = async () => {
       setIsDataLoading(true);
       try {
+        // --- SECCIÓN CORREGIDA ---
         const [clientesRes, centrosRes] = await Promise.all([
-          apiClient.get<ClienteParaSelectorDto[]>('/api/clientes'),
+          // 1. Especificamos que esperamos un resultado paginado.
+          // 2. Pedimos una página grande para que el buscador funcione bien.
+          apiClient.get<PagedResultDto<ClienteParaSelectorDto>>('/api/clientes', { params: { pageSize: 1000 } }),
           apiClient.get<CentroDeCostoParaSelectorDto[]>('/api/centrosdecosto'),
         ]);
-        setClientes(clientesRes.data);
+        // 3. Extraemos la lista de la propiedad 'items'.
+        setClientes(clientesRes.data.items);
+        // --- FIN DE LA CORRECCIÓN ---
+        
+        // La carga de Centros de Costo no ha cambiado, así que se mantiene igual.
+        // NOTA: Si paginamos Centros de Costo, esta línea también necesitaría cambiarse a: setCentrosDeCosto(centrosRes.data.items);
         setCentrosDeCosto(centrosRes.data);
+
       } catch (err) {
         console.error("Error cargando datos generales:", err);
         setError("No se pudieron cargar los datos necesarios (clientes/CC).");
@@ -190,22 +203,24 @@ const CrearTicketPage: React.FC = () => {
       ).slice(0, 5);
     }
     if (isClienteInputFocused) {
-      return clientes.slice(0, 3); // Muestra los primeros 3 como "recientes"
+      return clientes.slice(0, 3);
     }
     return [];
   }, [searchTermCliente, clientes, isClienteInputFocused]);
 
   const filteredCentrosDeCosto = useMemo(() => {
     if (searchTermCentroDeCosto) {
-      return centrosDeCosto.filter(cdc =>
-        cdc.nombre.toLowerCase().includes(searchTermCentroDeCosto.toLowerCase())
-      ).slice(0, 10);
+        // Asumimos que `centrosDeCosto` es un array aquí. Si también se paginara, necesitaría un cambio similar a `clientes`.
+        return centrosDeCosto.filter(cdc =>
+            cdc.nombre.toLowerCase().includes(searchTermCentroDeCosto.toLowerCase())
+        ).slice(0, 10);
     }
     if (isCentroCostoInputFocused) {
-      return centrosDeCosto.slice(-3);
+        return centrosDeCosto.slice(-3);
     }
     return [];
-  }, [searchTermCentroDeCosto, centrosDeCosto, isCentroCostoInputFocused]);
+}, [searchTermCentroDeCosto, centrosDeCosto, isCentroCostoInputFocused]);
+
 
   const handleClienteSelect = (cliente: ClienteParaSelectorDto) => {
     setSelectedCliente(cliente);
@@ -313,7 +328,8 @@ const CrearTicketPage: React.FC = () => {
     try {
       let response;
       if (ticketType === 'Soporte') {
-        response = await apiClient.post<{ ticketID: string }>('/api/tickets/soporte', baseData as CrearTicketSoporteDto);
+        const data: CrearTicketSoporteDto = baseData;
+        response = await apiClient.post<{ ticketID: string }>('/api/tickets/soporte', data);
       } else {
         const data: CrearTicketDesarrolloDto = { ...baseData, fechaInicioPlanificada: fechaInicioPlanificada || undefined, fechaFinPlanificada: fechaFinPlanificada || undefined, horasEstimadas: horasEstimadas === '' ? undefined : parseFloat(horasEstimadas), };
         response = await apiClient.post<{ ticketID: string }>('/api/tickets/desarrollo', data);
@@ -357,8 +373,6 @@ const CrearTicketPage: React.FC = () => {
 
   const prioridadOptions = Object.entries(PrioridadTicketEnum).filter(([, v]) => typeof v === 'number').map(([k, v]) => ({ value: v as PrioridadTicketEnum, label: k.replace(/_/g, ' ') }));
   const contactosDelClienteSeleccionado: ContactoParaClienteDto[] = selectedCliente?.tipoCliente === TipoClienteEnum.Empresa ? selectedCliente.contactos ?? [] : [];
-
-
 
   return (
     <>
@@ -414,7 +428,7 @@ const CrearTicketPage: React.FC = () => {
                       value={searchTermCliente}
                       onChange={(e) => {
                         setSearchTermCliente(e.target.value);
-                        setSelectedCliente(null); // Limpia la selección si el usuario escribe
+                        setSelectedCliente(null);
                         setContactoId('');
                       }}
                       onFocus={() => setIsClienteInputFocused(true)}
@@ -468,7 +482,6 @@ const CrearTicketPage: React.FC = () => {
                     <Form.Control
                       type="text"
                       placeholder="Buscar o hacer clic para ver opciones..."
-                      // La lógica aquí es idéntica a la del campo Cliente
                       value={searchTermCentroDeCosto}
                       onChange={(e) => {
                         setSearchTermCentroDeCosto(e.target.value);

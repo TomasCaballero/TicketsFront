@@ -1,12 +1,12 @@
 // src/types/clientes.ts
-import { TipoClienteEnum, type TicketDto } from './tickets'; // O donde tengas la enum
+import { TipoClienteEnum, type TicketDto } from './tickets';
 
 // DTO para el formulario de crear un nuevo contacto para un cliente existente
 export interface CrearContactoParaClienteDto {
   nombre: string;
   apellido: string;
-  email: string;
-  telefonoDirecto?: string;
+  email?: string; // CAMBIO: Ahora es opcional
+  telefonoDirecto: string; // CAMBIO: Ahora es obligatorio
   cargo?: string;
   esPrincipal?: boolean;
 }
@@ -15,9 +15,9 @@ export interface CrearContactoParaClienteDto {
 export interface CrearClienteConContactosDto {
   nombreCliente: string;
   tipoCliente: TipoClienteEnum;
+  telefonoPrincipal: string; // CAMBIO: Ahora es obligatorio
   cuit_RUC?: string;
   direccionFiscal?: string;
-  telefonoPrincipal?: string;
   emailPrincipal?: string;
   contactosNuevos?: CrearContactoParaClienteDto[];
 }
@@ -34,8 +34,7 @@ export interface ClienteDto {
   contactos?: ContactoParaClienteDto[];
   tickets?: TicketDto[];
 }
-// Interfaz para el objeto Contacto que se RECIBE de la API (con su ID)
-// ¡ESTA ES LA INTERFAZ QUE FALTA!
+
 export interface ContactoParaClienteDto {
   contactoID: string;
   nombre: string;
@@ -46,7 +45,6 @@ export interface ContactoParaClienteDto {
   esPrincipal?: boolean;
 }
 
-// DTO que se recibe del backend después de crear un cliente
 export interface ClienteCreadoDto {
   clienteID: string;
   nombreCliente: string;
@@ -55,7 +53,6 @@ export interface ClienteCreadoDto {
   contactos?: ContactoParaClienteDto[];
 }
 
-// DTO que se usa en el frontend para los selectores y el estado
 export interface ClienteParaSelectorDto {
   clienteID: string;
   nombreCliente: string;
@@ -71,13 +68,12 @@ export interface ActualizarClienteDto {
   telefonoPrincipal?: string;
   emailPrincipal?: string;
 }
-
 export interface CrearClienteDto{
   nombreCliente: string;
   tipoCliente: TipoClienteEnum;
+  telefonoPrincipal: string; // CAMBIO: Ahora es obligatorio
   cuit_RUC?: string;
   direccionFiscal?: string;
-  telefonoPrincipal?: string;
   emailPrincipal?: string;
   contactosNuevos?: CrearContactoParaClienteDto[];
 }

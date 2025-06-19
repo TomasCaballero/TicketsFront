@@ -96,7 +96,7 @@ const ModalCrearCliente: React.FC<ModalCrearClienteProps> = ({
         nombre: contactoNombre,
         apellido: contactoApellido,
         email: contactoEmail,
-        telefonoDirecto: contactoTelefono || undefined,
+        telefonoDirecto: contactoTelefono,
         cargo: contactoCargo || undefined,
         esPrincipal: true,
       });
@@ -107,7 +107,7 @@ const ModalCrearCliente: React.FC<ModalCrearClienteProps> = ({
       tipoCliente,
       cuit_RUC: cuitRuc || undefined,
       direccionFiscal: direccionFiscal || undefined,
-      telefonoPrincipal: telefonoPrincipal || undefined,
+      telefonoPrincipal: telefonoPrincipal,
       emailPrincipal: emailPrincipal || undefined,
       contactosNuevos: contactosParaEnviar,
     };
@@ -210,12 +210,11 @@ const ModalCrearCliente: React.FC<ModalCrearClienteProps> = ({
           <Row>
             <Col md={6}>
                 <Form.Group className="mb-3">
-                    <Form.Label>Teléfono Principal (Opcional)</Form.Label>
+                    <Form.Label>Teléfono Principal *</Form.Label>
                     <Form.Control
-                    type="text"
-                    autoComplete="off"
-                    value={telefonoPrincipal}
-                    onChange={(e) => setTelefonoPrincipal(e.target.value)}
+                        type="text" autoComplete="off" value={telefonoPrincipal}
+                        onChange={(e) => setTelefonoPrincipal(e.target.value)}
+                        required // --- CAMBIO APLICADO AQUÍ ---
                     />
                 </Form.Group>
             </Col>
@@ -266,24 +265,24 @@ const ModalCrearCliente: React.FC<ModalCrearClienteProps> = ({
               <Row>
                 <Col md={6}>
                     <Form.Group className="mb-3">
-                        <Form.Label>Email del Contacto *</Form.Label>
-                        <Form.Control
-                        type="email"
-                        autoComplete="off"
-                        value={contactoEmail}
-                        onChange={(e) => setContactoEmail(e.target.value)}
-                        required={tipoCliente === TipoClienteEnum.Empresa}
-                        />
-                    </Form.Group>
-                </Col>
-                <Col md={6}>
-                    <Form.Group className="mb-3">
-                        <Form.Label>Teléfono Directo (Opcional)</Form.Label>
+                        <Form.Label>Teléfono Directo *</Form.Label>
                         <Form.Control
                         type="text"
                         autoComplete="off"
                         value={contactoTelefono}
                         onChange={(e) => setContactoTelefono(e.target.value)}
+                        required
+                        />
+                    </Form.Group>
+                </Col>
+                <Col md={6}>
+                    <Form.Group className="mb-3">
+                        <Form.Label>Email del Contacto (Opcional)</Form.Label>
+                        <Form.Control
+                        type="email"
+                        autoComplete="off"
+                        value={contactoEmail}
+                        onChange={(e) => setContactoEmail(e.target.value)}
                         />
                     </Form.Group>
                 </Col>
